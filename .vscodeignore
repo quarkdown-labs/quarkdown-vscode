@@ -1,0 +1,13 @@
+.tours/**
+.vscode/**
+node_modules/**
+src/**
+.gitignore
+.space
+package.lock.json
+tsconfig.json
+webpack.config.js
+**/*.vsix
+.git/**
+.github/**
+**/*.svg

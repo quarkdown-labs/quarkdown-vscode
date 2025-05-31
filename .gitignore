@@ -1,0 +1,7 @@
+node_modules
+*.vsix
+.env
+out/
+test/
+package-lock.json
+output/

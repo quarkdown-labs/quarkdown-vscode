@@ -1,0 +1,80 @@
+{
+  "name": "quarkdown-vscode",
+  "displayName": "Quarkdown",
+  "description": "Quarkdown Language Support",
+  "version": "0.1.0",
+  "publisher": "francesco",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "quarkdown",
+        "aliases": [
+          "Quarkdown"
+        ],
+        "extensions": [
+          ".qmd"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "quarkdown.insertTemplate",
+        "title": "Insert Template"
+      },
+      {
+        "command": "quarkdown.livePreview",
+        "title": "Live Preview"
+      },
+      {
+        "command": "quarkdown.restartLanguageServer",
+        "title": "Restart Language Server"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceExtname == .qmd",
+          "command": "quarkdown.livePreview"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "Quarkdown",
+      "properties": {
+        "quarkdown.completion.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable autocompletion via Quarkdown Language Server"
+        },
+        "quarkdown.completion.triggerCharacters": {
+          "type": "array",
+          "default": [
+            "."
+          ],
+          "description": "Autocompletion trigger characters"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^5.3.0"
+  }
+}
