@@ -2,8 +2,13 @@
   "name": "quarkdown-vscode",
   "displayName": "Quarkdown",
   "description": "Quarkdown Language Support",
+  "icon": "images/icon.png",
   "version": "0.1.0",
   "publisher": "francesco",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FrancescoRocca/quarkdown-vscode"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -67,14 +72,16 @@
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "build": "npm run compile && vsce package"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
-    "@types/node": "18.x",
+    "@types/node": "22.x",
     "@types/vscode": "^1.74.0",
-    "typescript": "^5.3.0"
+    "@vscode/vsce": "^3.4.2",
+    "typescript": "^5.8.3"
   }
 }
