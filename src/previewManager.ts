@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import * as path from 'path';
+import { getQuarkdownCommandArgs } from './utils';
 
 export class QuarkdownPreviewManager {
     private static instance: QuarkdownPreviewManager;
@@ -15,19 +16,17 @@ export class QuarkdownPreviewManager {
     public async startPreview(filePath: string): Promise<void> {
         this.stopPreview();
 
-        const isWindows = process.platform === 'win32';
-        const command = isWindows ? 'cmd' : 'quarkdown';
-        const args = isWindows
-            ? ['/c', 'quarkdown.bat', 'c', filePath, '-w', '-p']
-            : ['c', filePath, '-w', '-p'];
+        const { command, args } = getQuarkdownCommandArgs(['c', filePath, '-w', '-p']);
 
         try {
-            this.process = cp.spawn(command, args, {
-                cwd: path.dirname(filePath),
-                stdio: 'ignore'
+            this.process = cp.execFile(command, args, {
+                cwd: path.dirname(filePath)
+            }, (error) => {
+                if (error) {
+                    this.showError();
+                }
             });
 
-            this.process.on('error', this.showError);
             vscode.window.showInformationMessage('Starting live preview...');
 
             setTimeout(() => {
@@ -46,11 +45,13 @@ export class QuarkdownPreviewManager {
     }
 
     private showError(): void {
-        vscode.window.showErrorMessage('Preview failed to start.', 'Install Guide')
-            .then(selection => {
-                if (selection === 'Install Guide') {
-                    vscode.env.openExternal(vscode.Uri.parse('https://github.com/iamgio/quarkdown'));
-                }
-            });
+        vscode.window.showErrorMessage(
+            'Preview failed to start. Please check your Quarkdown installation.',
+            'Install Guide'
+        ).then(selection => {
+            if (selection === 'Install Guide') {
+                vscode.env.openExternal(vscode.Uri.parse('https://github.com/iamgio/quarkdown'));
+            }
+        });
     }
 }

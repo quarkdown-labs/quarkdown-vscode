@@ -3,14 +3,15 @@
   "displayName": "Quarkdown",
   "description": "Quarkdown Language Support",
   "icon": "images/icon.png",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "francesco",
   "repository": {
     "type": "git",
     "url": "https://github.com/FrancescoRocca/quarkdown-vscode"
   },
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.74.0",
+    "node": ">=18"
   },
   "categories": [
     "Programming Languages"
@@ -51,24 +52,35 @@
         }
       ]
     },
-    "configuration": {
-      "type": "object",
-      "title": "Quarkdown",
-      "properties": {
-        "quarkdown.completion.enable": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable autocompletion via Quarkdown Language Server"
-        },
-        "quarkdown.completion.triggerCharacters": {
-          "type": "array",
-          "default": [
-            "."
-          ],
-          "description": "Autocompletion trigger characters"
+    "configuration": [
+      {
+        "title": "Quarkdown",
+        "properties": {
+          "quarkdown.path": {
+            "type": "string",
+            "default": "quarkdown",
+            "description": "Path to Quarkdown"
+          }
+        }
+      },
+      {
+        "title": "Quarkdown",
+        "properties": {
+          "quarkdown.completion.enable": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable autocompletion via Quarkdown Language Server"
+          },
+          "quarkdown.completion.triggerCharacters": {
+            "type": "array",
+            "default": [
+              "."
+            ],
+            "description": "Autocompletion trigger characters"
+          }
         }
       }
-    }
+    ]
   },
   "scripts": {
     "compile": "tsc -p ./",
@@ -76,12 +88,10 @@
     "build": "npm run compile && vsce package"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
-  },
-  "devDependencies": {
-    "@types/node": "22.x",
-    "@types/vscode": "^1.74.0",
+    "@types/node": "^22.15.29",
+    "@types/vscode": "^1.100.0",
     "@vscode/vsce": "^3.4.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vscode-languageclient": "^9.0.1"
   }
 }

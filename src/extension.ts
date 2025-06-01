@@ -15,30 +15,30 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
         vscode.commands.registerCommand('quarkdown.insertTemplate', insertTemplate),
         vscode.commands.registerCommand('quarkdown.livePreview', livePreview),
-        vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => restart(context))
+        vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => restart(context)),
     );
 }
 
 function insertTemplate(): void {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-        vscode.window.showWarningMessage('Open a file first.');
+        vscode.window.showWarningMessage('Please open a file first.');
         return;
     }
 
-    editor.insertSnippet(new vscode.SnippetString('# TODO\n'));
+    editor.insertSnippet(new vscode.SnippetString('# Retrieve this from LSP\n'));
 }
 
 async function livePreview(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
 
     if (!editor || !editor.document.fileName.endsWith('.qmd')) {
-        vscode.window.showWarningMessage('Open a Quarkdown (.qmd) file first.');
+        vscode.window.showWarningMessage('Please open a Quarkdown (.qmd) file first.');
         return;
     }
 
     if (editor.document.isDirty && !(await editor.document.save())) {
-        vscode.window.showErrorMessage('Save file before preview.');
+        vscode.window.showErrorMessage('Please save the file before starting preview.');
         return;
     }
 
@@ -47,11 +47,14 @@ async function livePreview(): Promise<void> {
 
 async function restart(context: vscode.ExtensionContext): Promise<void> {
     try {
-        await client.stop();
+        if (client) {
+            await client.stop();
+        }
+        client = new QuarkdownLanguageClient();
         await client.start(context);
-        vscode.window.showInformationMessage('Language Server restarted');
-    } catch {
-        vscode.window.showErrorMessage('Restart failed');
+        vscode.window.showInformationMessage('Quarkdown Language Server restarted successfully.');
+    } catch (error) {
+        vscode.window.showErrorMessage('Failed to restart Language Server.');
     }
 }
 
