@@ -14,8 +14,18 @@ export function activate(context: vscode.ExtensionContext): void {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('quarkdown.insertTemplate', insertTemplate),
-        vscode.commands.registerCommand('quarkdown.livePreview', livePreview),
-        vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => restart(context)),
+        vscode.commands.registerCommand('quarkdown.startPreview', startPreview),
+        vscode.commands.registerCommand('quarkdown.stopPreview', stopPreview),
+        vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => restart(context))
+    );
+
+    context.subscriptions.push(
+        vscode.workspace.onDidCloseTextDocument(document => {
+            const mgr = QuarkdownPreviewManager.getInstance();
+            if (document.fileName === mgr.getCurrentPreviewFile()) {
+                mgr.stopPreview();
+            }
+        })
     );
 }
 
@@ -29,7 +39,7 @@ function insertTemplate(): void {
     editor.insertSnippet(new vscode.SnippetString('# Retrieve this from LSP\n'));
 }
 
-async function livePreview(): Promise<void> {
+async function startPreview(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
 
     if (!editor || !editor.document.fileName.endsWith('.qmd')) {
@@ -42,7 +52,30 @@ async function livePreview(): Promise<void> {
         return;
     }
 
-    QuarkdownPreviewManager.getInstance().startPreview(editor.document.fileName);
+    const mgr = QuarkdownPreviewManager.getInstance();
+    const currentFile = editor.document.fileName;
+
+    if (mgr.isPreviewRunning() && mgr.getCurrentPreviewFile() !== currentFile) {
+        const ans = await vscode.window.showInformationMessage(
+            'Stop current preview and start new?', 'Yes', 'No'
+        );
+
+        if (ans !== 'Yes') {
+            return;
+        }
+    }
+
+    mgr.startPreview(currentFile);
+}
+
+async function stopPreview(): Promise<void> {
+    const previewManager = QuarkdownPreviewManager.getInstance();
+    if (previewManager.isPreviewRunning()) {
+        previewManager.stopPreview();
+        vscode.window.showInformationMessage('Live preview stopped.');
+    } else {
+        vscode.window.showInformationMessage('No preview is currently running.');
+    }
 }
 
 async function restart(context: vscode.ExtensionContext): Promise<void> {

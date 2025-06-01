@@ -6,6 +6,8 @@ import { getQuarkdownCommandArgs } from './utils';
 export class QuarkdownPreviewManager {
     private static instance: QuarkdownPreviewManager;
     private process: cp.ChildProcess | undefined;
+    private currentFilePath: string | undefined;
+    private isStopping: boolean = false;
 
     private constructor() { }
 
@@ -14,7 +16,13 @@ export class QuarkdownPreviewManager {
     }
 
     public async startPreview(filePath: string): Promise<void> {
+        if (this.process && this.currentFilePath === filePath) {
+            vscode.window.showInformationMessage('Live preview is already running for this file.');
+            return;
+        }
+
         this.stopPreview();
+        this.isStopping = false;
 
         const { command, args } = getQuarkdownCommandArgs(['c', filePath, '-w', '-p']);
 
@@ -22,26 +30,58 @@ export class QuarkdownPreviewManager {
             this.process = cp.execFile(command, args, {
                 cwd: path.dirname(filePath)
             }, (error) => {
-                if (error) {
+                if (error && !this.isStopping && error.code === 'ENOENT') {
                     this.showError();
+                    this.cleanup();
                 }
             });
 
+            this.process.on('exit', (code, signal) => {
+                this.cleanup();
+            });
+
+            this.process.on('error', (error: NodeJS.ErrnoException) => {
+                if (!this.isStopping && error.code === 'ENOENT') {
+                    this.showError();
+                }
+                this.cleanup();
+            });
+
+            this.currentFilePath = filePath;
             vscode.window.showInformationMessage('Starting live preview...');
 
             setTimeout(() => {
                 vscode.commands.executeCommand('simpleBrowser.show', 'http://localhost:8089');
             }, 2000);
         } catch {
-            this.showError();
+            if (!this.isStopping) {
+                this.showError();
+            }
+            this.cleanup();
         }
     }
 
     public stopPreview(): void {
+        this.isStopping = true;
+
         if (this.process) {
-            this.process.kill();
-            this.process = undefined;
+            if (process.platform === 'win32') {
+                try {
+                    cp.execSync(`taskkill /pid ${this.process.pid} /t /f`, { stdio: 'ignore' });
+                } catch {
+                    this.process.kill('SIGKILL');
+                }
+            } else {
+                this.process.kill('SIGTERM');
+            }
         }
+        this.cleanup();
+    }
+
+    private cleanup(): void {
+        this.process = undefined;
+        this.currentFilePath = undefined;
+        this.isStopping = false;
     }
 
     private showError(): void {
@@ -53,5 +93,13 @@ export class QuarkdownPreviewManager {
                 vscode.env.openExternal(vscode.Uri.parse('https://github.com/iamgio/quarkdown'));
             }
         });
+    }
+
+    public isPreviewRunning(): boolean {
+        return this.process !== undefined;
+    }
+
+    public getCurrentPreviewFile(): string | undefined {
+        return this.currentFilePath;
     }
 }

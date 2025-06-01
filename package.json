@@ -36,8 +36,12 @@
         "title": "Insert Template"
       },
       {
-        "command": "quarkdown.livePreview",
+        "command": "quarkdown.startPreview",
         "title": "Live Preview"
+      },
+      {
+        "command": "quarkdown.stopPreview",
+        "title": "Stop Live Preview"
       },
       {
         "command": "quarkdown.restartLanguageServer",
@@ -47,8 +51,19 @@
     "menus": {
       "editor/title": [
         {
-          "when": "resourceExtname == .qmd",
-          "command": "quarkdown.livePreview"
+          "command": "quarkdown.startPreview",
+          "when": "resourceExtname == .qmd || resourceExtname == .md",
+          "group": "navigation@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "quarkdown.startPreview",
+          "when": "resourceExtname == .qmd || resourceExtname == .md"
+        },
+        {
+          "command": "quarkdown.stopPreview",
+          "when": "resourceExtname == .qmd || resourceExtname == .md"
         }
       ]
     },
