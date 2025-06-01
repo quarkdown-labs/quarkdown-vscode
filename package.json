@@ -10,7 +10,7 @@
     "url": "https://github.com/FrancescoRocca/quarkdown-vscode"
   },
   "engines": {
-    "vscode": "^1.74.0",
+    "vscode": "^1.100.0",
     "node": ">=18"
   },
   "categories": [
@@ -87,11 +87,13 @@
     "watch": "tsc -watch -p ./",
     "build": "npm run compile && vsce package"
   },
-  "dependencies": {
+  "devDependencies": {
     "@types/node": "^22.15.29",
     "@types/vscode": "^1.100.0",
     "@vscode/vsce": "^3.4.2",
-    "typescript": "^5.8.3",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
     "vscode-languageclient": "^9.0.1"
   }
 }
