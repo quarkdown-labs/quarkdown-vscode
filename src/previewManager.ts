@@ -64,15 +64,25 @@ export class QuarkdownPreviewManager {
     public stopPreview(): void {
         this.isStopping = true;
 
-        if (this.process) {
-            if (process.platform === 'win32') {
-                try {
-                    cp.execSync(`taskkill /pid ${this.process.pid} /t /f`, { stdio: 'ignore' });
-                } catch {
-                    this.process.kill('SIGKILL');
+        const currentProcess = this.process;
+        if (currentProcess && currentProcess.pid) {
+            const pid = currentProcess.pid;
+            this.process = undefined;
+
+            try {
+                if (process.platform === 'win32') {
+                    cp.execSync(`taskkill /pid ${pid} /t /f`, { stdio: 'ignore' });
+                } else {
+                    process.kill(-pid, 'SIGKILL');
                 }
-            } else {
-                this.process.kill('SIGTERM');
+            } catch (e) {
+                if (currentProcess && !currentProcess.killed) {
+                    try {
+                        process.kill(pid, 'SIGKILL');
+                    } catch (killError) {
+                        /* ??? */
+                    }
+                }
             }
         }
         this.cleanup();
