@@ -3,7 +3,7 @@
   "displayName": "Quarkdown",
   "description": "Quarkdown Language Support",
   "icon": "images/icon.png",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "francesco",
   "repository": {
     "type": "git",

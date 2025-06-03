@@ -53,19 +53,7 @@ async function startPreview(): Promise<void> {
     }
 
     const mgr = QuarkdownPreviewManager.getInstance();
-    const currentFile = editor.document.fileName;
-
-    if (mgr.isPreviewRunning() && mgr.getCurrentPreviewFile() !== currentFile) {
-        const ans = await vscode.window.showInformationMessage(
-            'Stop current preview and start new?', 'Yes', 'No'
-        );
-
-        if (ans !== 'Yes') {
-            return;
-        }
-    }
-
-    mgr.startPreview(currentFile);
+    mgr.startPreview(editor.document.fileName);
 }
 
 async function stopPreview(): Promise<void> {

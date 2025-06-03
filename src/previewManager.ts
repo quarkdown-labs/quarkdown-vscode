@@ -8,8 +8,11 @@ export class QuarkdownPreviewManager {
     private process: cp.ChildProcess | undefined;
     private currentFilePath: string | undefined;
     private isStopping: boolean = false;
+    private outputChannel: vscode.OutputChannel;
 
-    private constructor() { }
+    private constructor() {
+        this.outputChannel = vscode.window.createOutputChannel('Quarkdown Preview');
+    }
 
     public static getInstance(): QuarkdownPreviewManager {
         return this.instance || (this.instance = new QuarkdownPreviewManager());
@@ -21,26 +24,26 @@ export class QuarkdownPreviewManager {
             return;
         }
 
-        this.stopPreview();
-        this.isStopping = false;
+        if (this.process) {
+            this.stopPreview();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
 
+        this.isStopping = false;
         const { command, args } = getQuarkdownCommandArgs(['c', filePath, '-w', '-p']);
 
         try {
             this.process = cp.execFile(command, args, {
                 cwd: path.dirname(filePath)
-            }, (error) => {
-                if (error && !this.isStopping && error.code === 'ENOENT') {
-                    this.showError();
-                    this.cleanup();
-                }
             });
 
-            this.process.on('exit', (code, signal) => {
+            this.process.on('exit', () => {
+                this.outputChannel.appendLine('Quarkdown process exited');
                 this.cleanup();
             });
 
             this.process.on('error', (error: NodeJS.ErrnoException) => {
+                this.outputChannel.appendLine(`Quarkdown process error: ${error.message}`);
                 if (!this.isStopping && error.code === 'ENOENT') {
                     this.showError();
                 }
@@ -53,36 +56,25 @@ export class QuarkdownPreviewManager {
             setTimeout(() => {
                 vscode.commands.executeCommand('simpleBrowser.show', 'http://localhost:8089');
             }, 2000);
-        } catch {
-            if (!this.isStopping) {
-                this.showError();
-            }
+        } catch (error) {
+            this.outputChannel.appendLine(`Failed to start preview: ${error}`);
+            this.showError();
             this.cleanup();
         }
     }
 
     public stopPreview(): void {
+        this.outputChannel.appendLine('Stopping preview...');
         this.isStopping = true;
 
-        const currentProcess = this.process;
-        if (currentProcess && currentProcess.pid) {
-            const pid = currentProcess.pid;
-            this.process = undefined;
+        if (this.process && this.process.pid) {
+            const pid = this.process.pid;
+            this.outputChannel.appendLine(`Killing process ${pid}`);
 
-            try {
-                if (process.platform === 'win32') {
-                    cp.execSync(`taskkill /pid ${pid} /t /f`, { stdio: 'ignore' });
-                } else {
-                    process.kill(-pid, 'SIGKILL');
-                }
-            } catch (e) {
-                if (currentProcess && !currentProcess.killed) {
-                    try {
-                        process.kill(pid, 'SIGKILL');
-                    } catch (killError) {
-                        /* ??? */
-                    }
-                }
+            if (process.platform === 'win32') {
+                cp.exec(`taskkill /pid ${pid} /t /f`, () => { });
+            } else {
+                this.process.kill('SIGTERM');
             }
         }
         this.cleanup();
