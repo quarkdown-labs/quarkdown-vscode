@@ -7,7 +7,6 @@ export class QuarkdownPreviewManager {
     private static instance: QuarkdownPreviewManager;
     private process: cp.ChildProcess | undefined;
     private currentFilePath: string | undefined;
-    private isStopping: boolean = false;
     private outputChannel: vscode.OutputChannel;
 
     private constructor() {
@@ -24,38 +23,22 @@ export class QuarkdownPreviewManager {
             return;
         }
 
-        if (this.process) {
-            this.stopPreview();
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+        this.stopPreview();
 
-        this.isStopping = false;
         const { command, args } = getQuarkdownCommandArgs(['c', filePath, '-w', '-p']);
-
         try {
-            this.process = cp.execFile(command, args, {
-                cwd: path.dirname(filePath)
-            });
+            this.process = cp.execFile(command, args, { cwd: path.dirname(filePath) });
 
-            this.process.on('exit', () => {
-                this.outputChannel.appendLine('Quarkdown process exited');
-                this.cleanup();
-            });
-
+            this.process.on('exit', () => this.cleanup());
             this.process.on('error', (error: NodeJS.ErrnoException) => {
                 this.outputChannel.appendLine(`Quarkdown process error: ${error.message}`);
-                if (!this.isStopping && error.code === 'ENOENT') {
-                    this.showError();
-                }
+                if (error.code === 'ENOENT') this.showError();
                 this.cleanup();
             });
 
             this.currentFilePath = filePath;
             vscode.window.showInformationMessage('Starting live preview...');
-
-            setTimeout(() => {
-                vscode.commands.executeCommand('simpleBrowser.show', 'http://localhost:8089');
-            }, 2000);
+            setTimeout(() => vscode.commands.executeCommand('simpleBrowser.show', 'http://localhost:8089'), 2000);
         } catch (error) {
             this.outputChannel.appendLine(`Failed to start preview: ${error}`);
             this.showError();
@@ -63,19 +46,18 @@ export class QuarkdownPreviewManager {
         }
     }
 
-    public stopPreview(): void {
-        this.outputChannel.appendLine('Stopping preview...');
-        this.isStopping = true;
-
-        if (this.process && this.process.pid) {
+    public async stopPreview(): Promise<void> {
+        if (this.process?.pid) {
             const pid = this.process.pid;
-            this.outputChannel.appendLine(`Killing process ${pid}`);
-
-            if (process.platform === 'win32') {
-                cp.exec(`taskkill /pid ${pid} /t /f`, () => { });
-            } else {
-                this.process.kill('SIGTERM');
-            }
+            this.outputChannel.appendLine(`Stopping process ${pid}`);
+            await new Promise<void>((resolve) => {
+                if (process.platform === 'win32') {
+                    cp.exec(`taskkill /pid ${pid} /t /f`, () => resolve());
+                } else {
+                    this.process!.once('exit', () => resolve());
+                    this.process!.kill('SIGTERM');
+                }
+            });
         }
         this.cleanup();
     }
@@ -83,7 +65,6 @@ export class QuarkdownPreviewManager {
     private cleanup(): void {
         this.process = undefined;
         this.currentFilePath = undefined;
-        this.isStopping = false;
     }
 
     private showError(): void {
@@ -98,7 +79,7 @@ export class QuarkdownPreviewManager {
     }
 
     public isPreviewRunning(): boolean {
-        return this.process !== undefined;
+        return !!this.process;
     }
 
     public getCurrentPreviewFile(): string | undefined {

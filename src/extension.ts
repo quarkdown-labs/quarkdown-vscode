@@ -41,7 +41,6 @@ function insertTemplate(): void {
 
 async function startPreview(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
-
     if (!editor || !editor.document.fileName.endsWith('.qmd')) {
         vscode.window.showWarningMessage('Please open a Quarkdown (.qmd) file first.');
         return;
@@ -52,8 +51,7 @@ async function startPreview(): Promise<void> {
         return;
     }
 
-    const mgr = QuarkdownPreviewManager.getInstance();
-    mgr.startPreview(editor.document.fileName);
+    QuarkdownPreviewManager.getInstance().startPreview(editor.document.fileName);
 }
 
 async function stopPreview(): Promise<void> {
@@ -68,18 +66,16 @@ async function stopPreview(): Promise<void> {
 
 async function restart(context: vscode.ExtensionContext): Promise<void> {
     try {
-        if (client) {
-            await client.stop();
-        }
+        if (client) await client.stop();
         client = new QuarkdownLanguageClient();
         await client.start(context);
         vscode.window.showInformationMessage('Quarkdown Language Server restarted successfully.');
-    } catch (error) {
+    } catch {
         vscode.window.showErrorMessage('Failed to restart Language Server.');
     }
 }
 
-export function deactivate(): Thenable<void> {
-    QuarkdownPreviewManager.getInstance().stopPreview();
+export async function deactivate(): Promise<void> {
+    await QuarkdownPreviewManager.getInstance().stopPreview();
     return client.stop();
 }
