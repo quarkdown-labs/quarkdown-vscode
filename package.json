@@ -25,7 +25,7 @@
           "Quarkdown"
         ],
         "extensions": [
-          ".qmd"
+          ".qd"
         ],
         "configuration": "./language-configuration.json"
       }
@@ -59,18 +59,18 @@
       "editor/title": [
         {
           "command": "quarkdown.startPreview",
-          "when": "resourceExtname == .qmd || resourceExtname == .md",
+          "when": "resourceExtname == .qd || resourceExtname == .md",
           "group": "navigation@1"
         }
       ],
       "commandPalette": [
         {
           "command": "quarkdown.startPreview",
-          "when": "resourceExtname == .qmd || resourceExtname == .md"
+          "when": "resourceExtname == .qd || resourceExtname == .md"
         },
         {
           "command": "quarkdown.stopPreview",
-          "when": "resourceExtname == .qmd || resourceExtname == .md"
+          "when": "resourceExtname == .qd || resourceExtname == .md"
         }
       ]
     },

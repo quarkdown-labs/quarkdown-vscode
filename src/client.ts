@@ -23,7 +23,7 @@ export class QuarkdownLanguageClient {
         const clientOptions: LanguageClientOptions = {
             documentSelector: [{ scheme: 'file', language: 'quarkdown' }],
             synchronize: {
-                fileEvents: vscode.workspace.createFileSystemWatcher('**/*.qmd')
+                fileEvents: vscode.workspace.createFileSystemWatcher('**/*.qd')
             },
             outputChannel: this.outputChannel
         };

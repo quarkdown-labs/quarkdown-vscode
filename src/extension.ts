@@ -41,8 +41,8 @@ function insertTemplate(): void {
 
 async function startPreview(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
-    if (!editor || !editor.document.fileName.endsWith('.qmd')) {
-        vscode.window.showWarningMessage('Please open a Quarkdown (.qmd) file first.');
+    if (!editor || !editor.document.fileName.endsWith('.qd')) {
+        vscode.window.showWarningMessage('Please open a Quarkdown (.qd) file first.');
         return;
     }
 
