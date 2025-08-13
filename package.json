@@ -34,7 +34,7 @@
       {
         "language": "quarkdown",
         "scopeName": "text.quarkdown",
-        "path": "./syntaxes/quarkdown.tmLanguage.json"
+        "path": "./syntaxes/quarkdown-tm-grammar/syntaxes/quarkdown.tmLanguage"
       }
     ],
     "commands": [
