@@ -4,10 +4,10 @@
   "description": "Quarkdown Language Support",
   "icon": "images/icon.png",
   "version": "0.1.2",
-  "publisher": "francesco",
+  "publisher": "Quarkdown",
   "repository": {
     "type": "git",
-    "url": "https://github.com/FrancescoRocca/quarkdown-vscode"
+    "url": "https://github.com/quarkdown-labs/quarkdown-vscode"
   },
   "engines": {
     "vscode": "^1.100.0",
@@ -28,6 +28,13 @@
           ".qmd"
         ],
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "quarkdown",
+        "scopeName": "text.quarkdown",
+        "path": "./syntaxes/quarkdown.tmLanguage.json"
       }
     ],
     "commands": [
@@ -96,6 +103,11 @@
         }
       }
     ]
+  },
+  "configurationDefaults": {
+    "quarkdown": {
+      "editor.semanticHighlighting.enabled": true
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",

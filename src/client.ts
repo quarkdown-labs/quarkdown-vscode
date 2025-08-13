@@ -42,6 +42,7 @@ export class QuarkdownLanguageClient {
         });
 
         try {
+            this.client.registerProposedFeatures();
             await this.client.start();
             context.subscriptions.push(this.client);
             this.outputChannel.appendLine('Quarkdown Language Server started successfully');
