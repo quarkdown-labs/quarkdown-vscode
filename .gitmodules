@@ -1,0 +1,6 @@
+[submodule "syntaxes/third-party/vscode-markdown-tm-grammar"]
+	path = syntaxes/third-party/vscode-markdown-tm-grammar
+	url = https://github.com/microsoft/vscode-markdown-tm-grammar.git
+[submodule "syntaxes/quarkdown-tm-grammar"]
+	path = syntaxes/quarkdown-tm-grammar
+	url = https://github.com/quarkdown-labs/quarkdown-tm-grammar
