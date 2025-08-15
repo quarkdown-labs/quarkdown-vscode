@@ -27,7 +27,13 @@ export class QuarkdownPreviewManager {
 
         this.stopPreview();
 
-        const { command, args } = getQuarkdownCommandArgs(['c', filePath, '-w', '-p', '-b', 'none', '--server-port', port.toString()]);
+        const { command, args } = getQuarkdownCommandArgs([
+            'c', filePath,
+            '--preview',
+            '--watch',
+            '--browser', 'none',
+            '--server-port', port.toString()
+        ]);
         try {
             this.process = cp.execFile(command, args, { cwd: path.dirname(filePath) });
 
