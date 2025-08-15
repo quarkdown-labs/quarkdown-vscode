@@ -3,6 +3,8 @@ import * as cp from 'child_process';
 import * as path from 'path';
 import { getQuarkdownCommandArgs } from './utils';
 
+const port = 8099;
+
 export class QuarkdownPreviewManager {
     private static instance: QuarkdownPreviewManager;
     private process: cp.ChildProcess | undefined;
@@ -25,7 +27,7 @@ export class QuarkdownPreviewManager {
 
         this.stopPreview();
 
-        const { command, args } = getQuarkdownCommandArgs(['c', filePath, '-w', '-p']);
+        const { command, args } = getQuarkdownCommandArgs(['c', filePath, '-w', '-p', '-b', 'none', '--server-port', port.toString()]);
         try {
             this.process = cp.execFile(command, args, { cwd: path.dirname(filePath) });
 
@@ -38,12 +40,20 @@ export class QuarkdownPreviewManager {
 
             this.currentFilePath = filePath;
             vscode.window.showInformationMessage('Starting live preview...');
-            setTimeout(() => vscode.commands.executeCommand('simpleBrowser.show', 'http://localhost:8089'), 2000);
+            setTimeout(this.openInSideView.bind(this), 2000);
         } catch (error) {
             this.outputChannel.appendLine(`Failed to start preview: ${error}`);
             this.showError();
             this.cleanup();
         }
+    }
+
+    private async openInSideView() {
+        await vscode.commands.executeCommand(
+            'simpleBrowser.show',
+            `http://localhost:${port}`
+        );
+        await vscode.commands.executeCommand('workbench.action.moveEditorToNextGroup');
     }
 
     public async stopPreview(): Promise<void> {
