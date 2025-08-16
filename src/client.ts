@@ -1,43 +1,34 @@
 import * as vscode from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, State } from 'vscode-languageclient/node';
 import { getQuarkdownCommandArgs } from './utils';
-import * as fs from 'fs';
+import { OUTPUT_CHANNELS } from './constants';
 
+/** Wrapper around VSCode's LanguageClient providing lifecycle convenience & diagnostics. */
 export class QuarkdownLanguageClient {
     private client: LanguageClient | undefined;
-    private outputChannel: vscode.OutputChannel;
+    private readonly outputChannel: vscode.OutputChannel;
 
     constructor() {
-        this.outputChannel = vscode.window.createOutputChannel('Quarkdown Language Server');
+        this.outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNELS.languageServer);
     }
 
+    /** Start the language server if not already running. */
     public async start(context: vscode.ExtensionContext): Promise<void> {
-        if (this.client) return;
+        if (this.client) return; // Already started.
 
         const { command, args } = getQuarkdownCommandArgs(['language-server']);
-        const serverOptions: ServerOptions = {
-            run: { command, args },
-            debug: { command, args }
-        };
-
+        const serverOptions: ServerOptions = { run: { command, args }, debug: { command, args } };
         const clientOptions: LanguageClientOptions = {
             documentSelector: [{ scheme: 'file', language: 'quarkdown' }],
-            synchronize: {
-                fileEvents: vscode.workspace.createFileSystemWatcher('**/*.qd')
-            },
+            synchronize: { fileEvents: vscode.workspace.createFileSystemWatcher('**/*.qd') },
             outputChannel: this.outputChannel
         };
 
-        this.client = new LanguageClient(
-            'quarkdownLanguageServer',
-            'Quarkdown Language Server',
-            serverOptions,
-            clientOptions
-        );
+        this.client = new LanguageClient('quarkdownLanguageServer', 'Quarkdown Language Server', serverOptions, clientOptions);
 
-        this.client.onDidChangeState((event) => {
+        this.client.onDidChangeState(event => {
             if (event.newState === State.Stopped) {
-                this.outputChannel.appendLine('Language server stopped unexpectedly');
+                this.outputChannel.appendLine('[language-server] Stopped unexpectedly');
             }
         });
 
@@ -45,10 +36,10 @@ export class QuarkdownLanguageClient {
             this.client.registerProposedFeatures();
             await this.client.start();
             context.subscriptions.push(this.client);
-            this.outputChannel.appendLine('Quarkdown Language Server started successfully');
+            this.outputChannel.appendLine('[language-server] Started successfully');
         } catch (error) {
+            this.outputChannel.appendLine(`[language-server] Failed to start: ${String(error)}`);
             this.client = undefined;
-            this.outputChannel.appendLine(`Failed to start language server: ${error}`);
             vscode.window.showErrorMessage(
                 'Quarkdown Language Server could not start. Check the Output panel for details.',
                 'Show Output', 'Learn More'
@@ -56,23 +47,24 @@ export class QuarkdownLanguageClient {
                 if (selection === 'Show Output') {
                     this.outputChannel.show();
                 } else if (selection === 'Learn More') {
-                    vscode.env.openExternal(vscode.Uri.parse('https://github.com/iamgio/quarkdown'));
+                    void vscode.env.openExternal(vscode.Uri.parse('https://github.com/iamgio/quarkdown'));
                 }
             });
         }
     }
 
+    /** Stop the language server (if running). */
     public async stop(): Promise<void> {
-        if (this.client && this.client.state !== State.Stopped) {
-            try {
+        if (!this.client) return;
+        try {
+            if (this.client.state !== State.Stopped) {
                 await this.client.stop();
-            } catch (error) {
-                this.outputChannel.appendLine(`Error stopping language client: ${error}`);
-            } finally {
-                this.client = undefined;
             }
-        } else {
+        } catch (error) {
+            this.outputChannel.appendLine(`[language-server] Error stopping: ${String(error)}`);
+        } finally {
             this.client = undefined;
         }
     }
 }
+

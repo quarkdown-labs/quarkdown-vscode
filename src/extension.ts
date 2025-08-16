@@ -1,12 +1,14 @@
 import * as vscode from 'vscode';
 import { QuarkdownLanguageClient } from './client';
 import { QuarkdownPreviewManager } from './previewManager';
+import { isQuarkdownFile } from './utils';
 
 let client: QuarkdownLanguageClient;
 
+/** Extension activation entrypoint. */
 export function activate(context: vscode.ExtensionContext): void {
     client = new QuarkdownLanguageClient();
-    client.start(context);
+    void client.start(context);
 
     vscode.languages.setLanguageConfiguration('quarkdown', {
         wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g
@@ -19,51 +21,54 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => restart(context))
     );
 
+    // Stop preview automatically when its document closes.
     context.subscriptions.push(
         vscode.workspace.onDidCloseTextDocument(document => {
             const mgr = QuarkdownPreviewManager.getInstance();
             if (document.fileName === mgr.getCurrentPreviewFile()) {
-                mgr.stopPreview();
+                void mgr.stopPreview();
             }
         })
     );
 }
 
+/** Insert a minimal starter template. */
 function insertTemplate(): void {
+    // TODO: Retrieve this from LSP
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
         vscode.window.showWarningMessage('Please open a file first.');
         return;
     }
-
-    editor.insertSnippet(new vscode.SnippetString('# Retrieve this from LSP\n'));
+    void editor.insertSnippet(new vscode.SnippetString('# Retrieve this from LSP\n'));
 }
 
+/** Start a live preview for the active Quarkdown document. */
 async function startPreview(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
-    if (!editor || !editor.document.fileName.endsWith('.qd')) {
+    if (!editor || !isQuarkdownFile(editor.document.fileName)) {
         vscode.window.showWarningMessage('Please open a Quarkdown (.qd) file first.');
         return;
     }
-
     if (editor.document.isDirty && !(await editor.document.save())) {
         vscode.window.showErrorMessage('Please save the file before starting preview.');
         return;
     }
-
-    QuarkdownPreviewManager.getInstance().startPreview(editor.document.fileName);
+    await QuarkdownPreviewManager.getInstance().startPreview(editor.document.fileName);
 }
 
+/** Stop an active live preview (if one is running). */
 async function stopPreview(): Promise<void> {
     const previewManager = QuarkdownPreviewManager.getInstance();
     if (previewManager.isPreviewRunning()) {
-        previewManager.stopPreview();
+        await previewManager.stopPreview();
         vscode.window.showInformationMessage('Live preview stopped.');
     } else {
         vscode.window.showInformationMessage('No preview is currently running.');
     }
 }
 
+/** Restart the Quarkdown language server. */
 async function restart(context: vscode.ExtensionContext): Promise<void> {
     try {
         if (client) await client.stop();
@@ -75,7 +80,9 @@ async function restart(context: vscode.ExtensionContext): Promise<void> {
     }
 }
 
+/** Extension deactivation hook. */
 export async function deactivate(): Promise<void> {
     await QuarkdownPreviewManager.getInstance().stopPreview();
     return client.stop();
 }
+
