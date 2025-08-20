@@ -44,36 +44,45 @@
       },
       {
         "command": "quarkdown.startPreview",
-        "title": "Live Preview"
+        "title": "Quarkdown Live Preview",
+        "icon": "$(open-preview)"
       },
       {
         "command": "quarkdown.stopPreview",
-        "title": "Stop Live Preview"
+        "title": "Stop Quarkdown Live Preview"
       },
       {
         "command": "quarkdown.restartLanguageServer",
-        "title": "Restart Language Server"
+        "title": "Restart Quarkdown Language Server"
       }
     ],
     "menus": {
       "editor/title": [
         {
           "command": "quarkdown.startPreview",
-          "when": "resourceExtname == .qd || resourceExtname == .md",
+          "when": "resourceExtname == .qd",
           "group": "navigation@1"
         }
       ],
       "commandPalette": [
         {
           "command": "quarkdown.startPreview",
-          "when": "resourceExtname == .qd || resourceExtname == .md"
+          "when": "resourceExtname == .qd"
         },
         {
           "command": "quarkdown.stopPreview",
-          "when": "resourceExtname == .qd || resourceExtname == .md"
+          "when": "resourceExtname == .qd"
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "quarkdown.startPreview",
+        "key": "shift+ctrl+v",
+        "mac": "shift+cmd+v",
+        "when": "editorLangId == quarkdown && !notebookEditorFocused"
+      }
+    ],
     "configuration": [
       {
         "title": "Quarkdown",
