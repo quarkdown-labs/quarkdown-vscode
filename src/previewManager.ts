@@ -15,6 +15,8 @@ export class QuarkdownPreviewManager {
     private readonly outputChannel: vscode.OutputChannel;
     private readonly port: number = DEFAULT_PREVIEW_PORT;
 
+    private readonly url: string = `http://localhost:${this.port}`;
+
     private constructor() {
         this.outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNELS.preview);
     }
@@ -25,11 +27,6 @@ export class QuarkdownPreviewManager {
 
     /** Start (or restart) the preview for a file. */
     public async startPreview(filePath: string): Promise<void> {
-        if (this.previewProcess && this.currentFilePath === filePath) {
-            vscode.window.showInformationMessage('Live preview is already running for this file.');
-            return;
-        }
-
         await this.stopPreview();
 
         const { command, args } = getQuarkdownCommandArgs([
@@ -54,9 +51,9 @@ export class QuarkdownPreviewManager {
 
             this.currentFilePath = filePath;
             vscode.window.showInformationMessage('Starting live preview...');
-            setTimeout(() => void this.openInSideView(), 1500); // small delay to allow server startup
+            setTimeout(() => void this.openInSideView(), 3000); // delay to allow server startup
         } catch (error) {
-            this.outputChannel.appendLine(`[preview] Failed to start: ${String(error)}`);
+            this.outputChannel.appendLine(`[preview] Failed to start: ${error}`);
             this.showInstallError();
             this.cleanup();
         }
@@ -65,19 +62,20 @@ export class QuarkdownPreviewManager {
     /** Reveal the live preview in a side column. */
     private async openInSideView(): Promise<void> {
         try {
-            await vscode.commands.executeCommand('simpleBrowser.show', `http://localhost:${this.port}`);
+            await vscode.commands.executeCommand('simpleBrowser.show', this.url);
             await vscode.commands.executeCommand('workbench.action.moveEditorToNextGroup');
-        } catch (err) {
-            this.outputChannel.appendLine(`[preview] Failed to open side view: ${String(err)}`);
+        } catch (error) {
+            this.outputChannel.appendLine(`[preview] Failed to open side view: ${error}`);
         }
     }
 
     /** Stop the preview process, if running. */
     public async stopPreview(): Promise<void> {
         if (!this.previewProcess?.pid) {
-            this.cleanup();
+            await this.cleanup();
             return;
         }
+
         const pid = this.previewProcess.pid;
         this.outputChannel.appendLine(`[preview] Stopping process ${pid}`);
         await new Promise<void>((resolve) => {
@@ -88,7 +86,8 @@ export class QuarkdownPreviewManager {
                 this.previewProcess!.kill('SIGTERM');
             }
         });
-        this.cleanup();
+
+        await this.cleanup();
     }
 
     /** Current running status. */
@@ -101,9 +100,27 @@ export class QuarkdownPreviewManager {
         return this.currentFilePath;
     }
 
-    private cleanup(): void {
+    private async cleanup(): Promise<void> {
         this.previewProcess = undefined;
         this.currentFilePath = undefined;
+
+        await this.closeBrowser();
+    }
+
+    /** Close the preview's browser tab. */
+    private async closeBrowser() {
+        this.outputChannel.appendLine(`[preview] Closing browser tab for ${this.url}`);
+
+        const browserTab = vscode.window.tabGroups.all
+            .flatMap(g => g.tabs)
+            .find(t => {
+                const input = t.input as any;
+                return typeof input?.viewType === 'string' && input.viewType.includes('simpleBrowser.view');
+            });
+
+        if (browserTab) {
+            await vscode.window.tabGroups.close(browserTab);
+        }
     }
 
     private showInstallError(): void {

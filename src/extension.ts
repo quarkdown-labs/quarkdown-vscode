@@ -24,9 +24,9 @@ export function activate(context: vscode.ExtensionContext): void {
     // Stop preview automatically when its document closes.
     context.subscriptions.push(
         vscode.workspace.onDidCloseTextDocument(document => {
-            const mgr = QuarkdownPreviewManager.getInstance();
-            if (document.fileName === mgr.getCurrentPreviewFile()) {
-                void mgr.stopPreview();
+            const manager = QuarkdownPreviewManager.getInstance();
+            if (document.fileName === manager.getCurrentPreviewFile()) {
+                void manager.stopPreview();
             }
         })
     );
