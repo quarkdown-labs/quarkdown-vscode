@@ -30,7 +30,7 @@ export class QuarkdownPreviewManager {
         await this.stopPreview();
 
         const { command, args } = getQuarkdownCommandArgs([
-            'c', filePath,
+            'c', path.basename(filePath),
             '--preview', '--watch',
             '--browser', 'none',
             '--server-port', this.port.toString()
