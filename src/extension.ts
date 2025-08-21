@@ -15,7 +15,6 @@ export function activate(context: vscode.ExtensionContext): void {
     });
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('quarkdown.insertTemplate', insertTemplate),
         vscode.commands.registerCommand('quarkdown.startPreview', startPreview),
         vscode.commands.registerCommand('quarkdown.stopPreview', stopPreview),
         vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => restart(context))
@@ -30,17 +29,6 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         })
     );
-}
-
-/** Insert a minimal starter template. */
-function insertTemplate(): void {
-    // TODO: Retrieve this from LSP
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-        vscode.window.showWarningMessage('Please open a file first.');
-        return;
-    }
-    void editor.insertSnippet(new vscode.SnippetString('# Retrieve this from LSP\n'));
 }
 
 /** Start a live preview for the active Quarkdown document. */

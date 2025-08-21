@@ -39,10 +39,6 @@
     ],
     "commands": [
       {
-        "command": "quarkdown.insertTemplate",
-        "title": "Insert Template"
-      },
-      {
         "command": "quarkdown.startPreview",
         "title": "Quarkdown Live Preview",
         "icon": "$(open-preview)"
@@ -91,23 +87,6 @@
             "type": "string",
             "default": "quarkdown",
             "description": "Path to Quarkdown"
-          }
-        }
-      },
-      {
-        "title": "Quarkdown",
-        "properties": {
-          "quarkdown.completion.enable": {
-            "type": "boolean",
-            "default": true,
-            "description": "Enable autocompletion via Quarkdown Language Server"
-          },
-          "quarkdown.completion.triggerCharacters": {
-            "type": "array",
-            "default": [
-              "."
-            ],
-            "description": "Autocompletion trigger characters"
           }
         }
       }
