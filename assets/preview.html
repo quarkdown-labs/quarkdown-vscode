@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; img-src https: http: data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-src __FRAME_ORIGINS__;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            color-scheme: var(--vscode-color-scheme, light dark);
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            background: var(--vscode-editor-background);
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        body {
+            position: relative;
+            display: flex;
+            min-height: 0;
+            /* prevent flex overflow */
+            min-width: 0;
+        }
+
+        #loading {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: var(--vscode-foreground);
+            font-family: var(--vscode-font-family, sans-serif);
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: var(--vscode-progressBar-background, #888);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin: 8px auto;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hint {
+            margin-top: 4px;
+            color: var(--vscode-descriptionForeground);
+            font-size: 12px;
+        }
+
+        .frame {
+            border: 0;
+            flex: 1 1 auto;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            min-width: 0;
+            display: none;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading">
+        <div>
+            <div class="spinner" aria-hidden="true"></div>
+            <div id="loading-text">__LOADING_MESSAGE__</div>
+            <div id="hint" class="hint"></div>
+        </div>
+    </div>
+    <iframe id="qd-frame" class="frame" title="Quarkdown Preview"
+        sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+    <script>
+        const frame = document.getElementById('qd-frame');
+        const loading = document.getElementById('loading');
+        const hint = document.getElementById('hint');
+        let hintTimer = setTimeout(() => { if (hint) hint.textContent = "__STILL_WAITING_MESSAGE__"; }, 3000);
+
+        window.addEventListener('message', (event) => {
+            const { command, url } = event.data || {};
+            if (command === 'setSrc' && url) {
+                frame.addEventListener('load', () => {
+                    clearTimeout(hintTimer);
+                    loading.style.display = 'none';
+                    frame.style.display = 'block';
+                }, { once: true });
+                frame.src = url;
+            }
+        });
+    </script>
+</body>
+
+</html>

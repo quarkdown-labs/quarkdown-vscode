@@ -13,8 +13,8 @@ export function getQuarkdownCommandArgs(additionalArgs: string[]): { command: st
     const quarkdownPath = config.get<string>(CONFIG_KEYS.executablePath, 'quarkdown');
 
     if (process.platform === 'win32') {
-        const batPath = quarkdownPath.endsWith('.bat') ? quarkdownPath : `${quarkdownPath}.bat`;
-        return { command: 'cmd', args: ['/c', batPath, ...additionalArgs] };
+        const bat = quarkdownPath.endsWith('.bat') ? quarkdownPath : `${quarkdownPath}.bat`;
+        return { command: 'cmd', args: ['/c', bat, ...additionalArgs] };
     }
     return { command: quarkdownPath, args: additionalArgs };
 }

@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { QuarkdownLanguageClient } from './client';
 import { QuarkdownPreviewManager } from './previewManager';
 import { isQuarkdownFile } from './utils';
+import { Strings } from './strings';
+import { VIEW_TYPES } from './constants';
 
 let client: QuarkdownLanguageClient;
 
@@ -20,6 +22,15 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => restart(context))
     );
 
+    // Ensure preview webview is not restored on vscode startup
+    context.subscriptions.push(
+        vscode.window.registerWebviewPanelSerializer(VIEW_TYPES.preview, {
+            async deserializeWebviewPanel(panel: vscode.WebviewPanel): Promise<void> {
+                try { panel.dispose(); } catch { }
+            }
+        })
+    );
+
     // Stop preview automatically when its document closes.
     context.subscriptions.push(
         vscode.workspace.onDidCloseTextDocument(document => {
@@ -35,11 +46,11 @@ export function activate(context: vscode.ExtensionContext): void {
 async function startPreview(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (!editor || !isQuarkdownFile(editor.document.fileName)) {
-        vscode.window.showWarningMessage('Please open a Quarkdown (.qd) file first.');
+        vscode.window.showWarningMessage(Strings.openQuarkdownFirst);
         return;
     }
     if (editor.document.isDirty && !(await editor.document.save())) {
-        vscode.window.showErrorMessage('Please save the file before starting preview.');
+        vscode.window.showErrorMessage(Strings.saveBeforePreview);
         return;
     }
     await QuarkdownPreviewManager.getInstance().startPreview(editor.document.fileName);
@@ -50,9 +61,9 @@ async function stopPreview(): Promise<void> {
     const previewManager = QuarkdownPreviewManager.getInstance();
     if (previewManager.isPreviewRunning()) {
         await previewManager.stopPreview();
-        vscode.window.showInformationMessage('Live preview stopped.');
+        vscode.window.showInformationMessage(Strings.previewStopped);
     } else {
-        vscode.window.showInformationMessage('No preview is currently running.');
+        vscode.window.showInformationMessage(Strings.previewNotRunning);
     }
 }
 
@@ -62,9 +73,9 @@ async function restart(context: vscode.ExtensionContext): Promise<void> {
         if (client) await client.stop();
         client = new QuarkdownLanguageClient();
         await client.start(context);
-        vscode.window.showInformationMessage('Quarkdown Language Server restarted successfully.');
+        vscode.window.showInformationMessage(Strings.lsRestarted);
     } catch {
-        vscode.window.showErrorMessage('Failed to restart Language Server.');
+        vscode.window.showErrorMessage(Strings.lsRestartFailed);
     }
 }
 
