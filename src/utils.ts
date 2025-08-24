@@ -21,6 +21,7 @@ export function getQuarkdownCommandArgs(additionalArgs: string[]): { command: st
 
 /**
  * Like {@link getQuarkdownCommandArgs}, but with specific handy defaults for compilation.
+ * @param filePath Path to the main Quarkdown source file to compile.
  */
 export function getQuarkdownCompilerCommandArgs(filePath: string, additionalArgs: string[]): { command: string; args: string[] } {
     return getQuarkdownCommandArgs([
