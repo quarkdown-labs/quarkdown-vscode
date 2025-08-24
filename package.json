@@ -86,7 +86,12 @@
           "quarkdown.path": {
             "type": "string",
             "default": "quarkdown",
-            "description": "Path to Quarkdown"
+            "description": "Path to the Quarkdown executable"
+          },
+          "quarkdown.outputDirectory": {
+            "type": "string",
+            "default": "output",
+            "description": "Output directory for Quarkdown artifacts, relative to the workspace root"
           }
         }
       }

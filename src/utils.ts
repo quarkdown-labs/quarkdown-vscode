@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
-import { CONFIG_KEYS, CONFIG_ROOT } from './constants';
+import * as config from './config';
+import { QUARKDOWN_EXTENSION } from './constants';
+import path from 'path';
 
 /**
  * Resolve the Quarkdown executable command + arguments, accounting for platform differences.
@@ -9,18 +11,28 @@ import { CONFIG_KEYS, CONFIG_ROOT } from './constants';
  * @returns Object containing a command & args suitable for `cp.spawn` / `cp.execFile`.
  */
 export function getQuarkdownCommandArgs(additionalArgs: string[]): { command: string; args: string[] } {
-    const config = vscode.workspace.getConfiguration(CONFIG_ROOT);
-    const quarkdownPath = config.get<string>(CONFIG_KEYS.executablePath, 'quarkdown');
-
+    const executablePath = config.getExecutablePath();
     if (process.platform === 'win32') {
-        const bat = quarkdownPath.endsWith('.bat') ? quarkdownPath : `${quarkdownPath}.bat`;
+        const bat = executablePath.endsWith('.bat') ? executablePath : `${executablePath}.bat`;
         return { command: 'cmd', args: ['/c', bat, ...additionalArgs] };
     }
-    return { command: quarkdownPath, args: additionalArgs };
+    return { command: executablePath, args: additionalArgs };
+}
+
+/**
+ * Like {@link getQuarkdownCommandArgs}, but with specific handy defaults for compilation.
+ */
+export function getQuarkdownCompilerCommandArgs(filePath: string, additionalArgs: string[]): { command: string; args: string[] } {
+    return getQuarkdownCommandArgs([
+        'c', path.basename(filePath),
+        '--out', config.getOutputDirectory(),
+        '--browser', 'none',
+        ...additionalArgs
+    ]);
 }
 
 /** Determine whether the given file name appears to be a Quarkdown document. */
 export function isQuarkdownFile(fileName: string | undefined): boolean {
-    return !!fileName && fileName.toLowerCase().endsWith('.qd');
+    return !!fileName && fileName.toLowerCase().endsWith(QUARKDOWN_EXTENSION);
 }
 

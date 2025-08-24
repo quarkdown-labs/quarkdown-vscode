@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as http from 'http';
 import * as net from 'net';
 import * as fs from 'fs';
-import { getQuarkdownCommandArgs } from './utils';
+import { getQuarkdownCommandArgs, getQuarkdownCompilerCommandArgs } from './utils';
 import { DEFAULT_PREVIEW_PORT, OUTPUT_CHANNELS, VIEW_TYPES } from './constants';
 import { Strings } from './strings';
 
@@ -61,10 +61,8 @@ export class QuarkdownPreviewManager {
     public async startPreview(filePath: string): Promise<void> {
         await this.stopPreview();
 
-        const { command, args } = getQuarkdownCommandArgs([
-            'c', path.basename(filePath),
+        const { command, args } = getQuarkdownCompilerCommandArgs(filePath, [
             '--preview', '--watch',
-            '--browser', 'none',
             '--server-port', this.port.toString()
         ]);
         this.outputChannel.appendLine(`[preview] Starting: ${command} ${args.join(' ')}`);
