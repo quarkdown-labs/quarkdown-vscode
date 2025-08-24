@@ -1,0 +1,22 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "compile",
+			"type": "shell",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"problemMatcher": [],
+			"group": "build",
+			"command": "npm",
+			"args": ["run", "compile"]
+		},
+		{
+			"label": "prepare-compile",
+			"dependsOn": ["compile"],
+			"runOptions": { "runOn": "default" }
+		}
+	]
+}
