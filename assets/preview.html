@@ -84,6 +84,49 @@
             max-height: calc(100vh / var(--scale-factor));
             translate: calc((var(--scale-factor) - 1) * 50%) calc((var(--scale-factor) - 1) * 50%);
         }
+
+        #zoom-controls {
+            display: none;
+            flex-direction: row;
+            z-index: 9999999;
+            position: fixed;
+            top: 24px;
+            right: 24px;
+        }
+
+        #zoom-controls > div {
+            padding: 4px;
+            min-width: 1.5em;
+            text-align: center;
+            user-select: none;
+            font-size: 18px;
+            line-height: 18px;
+            background-color: var(--vscode-editor-background);
+            color: var(--vscode-foreground);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        #zoom-controls > div:first-child {
+            padding-left: 8px;
+            border-radius: 12px 0 0 12px;
+        }
+
+        #zoom-controls > div:last-child {
+            padding-right: 8px;
+            border-radius: 0 12px 12px 0;
+            content: var(--vscode-icon);
+        }
+
+        #zoom-controls > :is(#zoom-in, #zoom-out):hover {
+            cursor: pointer;
+            background-color: color-mix(in srgb, var(--vscode-editor-background) 85%, var(--vscode-editor-foreground));
+        }
+
+        #zoom-controls > #zoom-value {
+            font-size: 0.8rem;
+            font-variant-numeric: tabular-nums;
+            min-width: 3em;
+        }
     </style>
 </head>
 
@@ -95,22 +138,52 @@
             <div id="hint" class="hint"></div>
         </div>
     </div>
-    <iframe id="qd-frame" title="Quarkdown Preview"
-        sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+    <iframe id="qd-frame" title="Quarkdown Preview" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+    <div id="zoom-controls">
+        <div id="zoom-out">–</div>
+        <div id="zoom-value">N/A</div>
+        <div id="zoom-in">+</div>
+    </div>
     <script>
         const frame = document.getElementById('qd-frame');
         const loading = document.getElementById('loading');
         const hint = document.getElementById('hint');
         let hintTimer = setTimeout(() => { if (hint) hint.textContent = "__STILL_WAITING_MESSAGE__"; }, 3000);
 
+        // Zoom control
+        const zoomControls = document.getElementById('zoom-controls');
+        const zoomIn = document.getElementById('zoom-in');
+        const zoomOut = document.getElementById('zoom-out');
+        const zoomValue = document.getElementById('zoom-value');
+        const zoomDelta = 0.1;
+        let scaleFactor = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale-factor'));
+
+        // Initiates the elements when the preview content is ready
+        function init() {
+            updateZoomValue();
+            clearTimeout(hintTimer);
+            loading.style.display = 'none';
+            frame.style.display = 'block';
+            zoomControls.style.display = 'flex';
+
+            zoomIn.addEventListener('click', () => setZoomValue(scaleFactor + zoomDelta));
+            zoomOut.addEventListener('click', () => setZoomValue(scaleFactor - zoomDelta));
+        }
+
+        function updateZoomValue() {
+            zoomValue.textContent = `${Math.round(scaleFactor * 100)}%`;
+        }
+
+        function setZoomValue(value) {
+            scaleFactor = value;
+            document.documentElement.style.setProperty('--scale-factor', scaleFactor);
+            updateZoomValue();
+        }
+
         window.addEventListener('message', (event) => {
             const { command, url } = event.data || {};
             if (command === 'setSrc' && url) {
-                frame.addEventListener('load', () => {
-                    clearTimeout(hintTimer);
-                    loading.style.display = 'none';
-                    frame.style.display = 'block';
-                }, { once: true });
+                frame.addEventListener('load', init, { once: true });
                 frame.src = url;
             }
         });
