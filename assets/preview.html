@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root {
+            --scale-factor: 1;
             color-scheme: var(--vscode-color-scheme, light dark);
         }
 
@@ -65,7 +66,7 @@
             font-size: 12px;
         }
 
-        .frame {
+        iframe {
             border: 0;
             flex: 1 1 auto;
             width: 100%;
@@ -74,6 +75,14 @@
             min-width: 0;
             display: none;
             overflow: auto;
+
+            /* Scaling controls */
+            scale: var(--scale-factor);
+            min-width: calc(100% / var(--scale-factor));
+            max-width: calc(100% / var(--scale-factor));
+            min-height: calc(100vh / var(--scale-factor));
+            max-height: calc(100vh / var(--scale-factor));
+            translate: calc((var(--scale-factor) - 1) * 50%) calc((var(--scale-factor) - 1) * 50%);
         }
     </style>
 </head>
@@ -86,7 +95,7 @@
             <div id="hint" class="hint"></div>
         </div>
     </div>
-    <iframe id="qd-frame" class="frame" title="Quarkdown Preview"
+    <iframe id="qd-frame" title="Quarkdown Preview"
         sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
     <script>
         const frame = document.getElementById('qd-frame');
