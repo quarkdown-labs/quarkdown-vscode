@@ -1,6 +1,6 @@
 # 🪐 Official Quarkdown extension for VS Code
 
-This extension provides [Quarkdown](https://quarkdown.com/) language support for VS Code.
+This extension provides [Quarkdown](https://quarkdown.com/) language support for `.qd` files.
 
 ## Features
 
