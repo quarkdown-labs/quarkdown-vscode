@@ -154,12 +154,11 @@
         let hintTimer = setTimeout(() => { if (hint) hint.textContent = "__STILL_WAITING_MESSAGE__"; }, 3000);
 
         // Zoom control
+        const ZOOM_DELTA = 0.1; // Amount to zoom in/out
         const zoomControls = document.getElementById('zoom-controls');
         const zoomIn = document.getElementById('zoom-in');
         const zoomOut = document.getElementById('zoom-out');
         const zoomValue = document.getElementById('zoom-value');
-        const zoomDelta = 0.1;
-        const proximityThreshold = 48; // Distance threshold for showing zoom controls
         let scaleFactor = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale-factor'));
 
         // Initiates the elements when the preview content is ready
@@ -170,8 +169,8 @@
             frame.style.display = 'block';
             zoomControls.style.display = 'flex';
             
-            zoomIn.addEventListener('click', () => setZoomValue(scaleFactor + zoomDelta));
-            zoomOut.addEventListener('click', () => setZoomValue(scaleFactor - zoomDelta));
+            zoomIn.addEventListener('click', () => setZoomValue(scaleFactor + ZOOM_DELTA));
+            zoomOut.addEventListener('click', () => setZoomValue(scaleFactor - ZOOM_DELTA));
 
             setTimeout(() => {
                 if (!zoomControls.matches(':hover')) {
@@ -187,7 +186,7 @@
         }
 
         function setZoomValue(value) {
-            scaleFactor = Math.max(value, zoomDelta);
+            scaleFactor = Math.max(value, ZOOM_DELTA);
             document.documentElement.style.setProperty('--scale-factor', scaleFactor);
             updateZoomValue();
         }
