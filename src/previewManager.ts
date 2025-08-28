@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import * as path from 'path';
 import * as http from 'http';
-import * as net from 'net';
 import * as fs from 'fs';
 import { getQuarkdownCommandArgs, getQuarkdownCompilerCommandArgs } from './utils';
 import { DEFAULT_PREVIEW_PORT, OUTPUT_CHANNELS, VIEW_TYPES } from './constants';
@@ -21,8 +20,6 @@ export class QuarkdownPreviewManager {
     private webviewPanel: vscode.WebviewPanel | undefined;
     private isStopping = false;
     private serverReadyTimer: NodeJS.Timeout | undefined;
-    private proxyServer: http.Server | undefined;
-    private proxyPort: number | undefined;
 
     private readonly url: string = `http://localhost:${this.port}`;
 
@@ -48,8 +45,7 @@ export class QuarkdownPreviewManager {
             return `<!DOCTYPE html><html><body>Failed to load preview UI.</body></html>`;
         }
 
-        const allowedPort = this.proxyPort ?? this.port;
-        const allowedOrigins = [`http://localhost:${allowedPort}`, `http://127.0.0.1:${allowedPort}`].join(' ');
+        const allowedOrigins = [`http://localhost:${this.port}`, `http://127.0.0.1:${this.port}`].join(' ');
 
         return raw
             .replace(/__FRAME_ORIGINS__/g, allowedOrigins)
@@ -93,8 +89,8 @@ export class QuarkdownPreviewManager {
                         this.startContinuousServerPolling();
                         return;
                     }
-                    this.outputChannel.appendLine('[preview] Server is ready. Starting proxy and loading in Webview.');
-                    void this.startProxyAndLoad();
+                    this.outputChannel.appendLine('[preview] Server is ready. Loading in Webview.');
+                    this.updateWebviewContent(this.url);
                 })
                 .catch((err) => this.outputChannel.appendLine(`[preview] waitForServerReady error: ${err}`));
         } catch (error) {
@@ -185,7 +181,6 @@ export class QuarkdownPreviewManager {
             this.webviewPanel = undefined;
         }
         this.stopContinuousServerPolling();
-        await this.stopProxy();
     }
 
     /** Polls the preview server until it starts or we time out */
@@ -217,7 +212,7 @@ export class QuarkdownPreviewManager {
             const ready = await this.waitForServerReady(this.url, 1, 200);
             if (ready) {
                 this.outputChannel.appendLine('[preview] Server became ready. Updating Webview.');
-                await this.startProxyAndLoad();
+                this.updateWebviewContent(this.url);
                 this.stopContinuousServerPolling();
             }
         }, 1000);
@@ -228,81 +223,6 @@ export class QuarkdownPreviewManager {
             clearInterval(this.serverReadyTimer);
             this.serverReadyTimer = undefined;
         }
-    }
-
-    /** Start a tiny HTTP proxy (X-Frame-Options/CSP) */
-    private async startProxyAndLoad(): Promise<void> {
-        await this.stopProxy();
-        const target = new URL(this.url);
-        const server = http.createServer((req, res) => {
-            if (!req.url) { res.statusCode = 400; return res.end('Bad Request'); }
-            const options: http.RequestOptions = {
-                protocol: target.protocol,
-                hostname: target.hostname,
-                port: target.port,
-                method: req.method,
-                path: req.url,
-                headers: { ...req.headers, host: `${target.hostname}:${target.port}` },
-            };
-            const proxyReq = http.request(options, (proxyRes) => {
-                // Copy headers but strip frame-blocking
-                const headers: http.IncomingHttpHeaders = { ...proxyRes.headers };
-                delete headers['x-frame-options'];
-                delete headers['content-security-policy'];
-                res.writeHead(proxyRes.statusCode || 200, headers as any);
-                proxyRes.pipe(res);
-            });
-            proxyReq.on('error', (err) => {
-                this.outputChannel.appendLine(`[preview-proxy] error: ${err}`);
-                if (!res.headersSent) res.writeHead(502);
-                res.end('Proxy error');
-            });
-            req.pipe(proxyReq);
-        });
-
-        // Proxy WebSocket/SSE upgrades by forwarding the original request to upstream
-        server.on('upgrade', (req, clientSocket, head) => {
-            const upstream = net.connect(Number(target.port), target.hostname, () => {
-                // Write the original upgrade request to upstream
-                const pathWithQuery = req.url || '/';
-                upstream.write(`GET ${pathWithQuery} HTTP/1.1\r\n`);
-                upstream.write(`Host: ${target.hostname}:${target.port}\r\n`);
-                for (const [k, v] of Object.entries(req.headers)) {
-                    if (!k || k.toLowerCase() === 'host') continue;
-                    upstream.write(`${k}: ${Array.isArray(v) ? v.join(', ') : v}\r\n`);
-                }
-                upstream.write(`\r\n`);
-                if (head && head.length) upstream.write(head);
-                // Pipe both ways
-                upstream.pipe(clientSocket);
-                clientSocket.pipe(upstream);
-            });
-            upstream.on('error', () => clientSocket.destroy());
-        });
-
-        await new Promise<void>((resolve, reject) => {
-            server.once('error', reject);
-            server.listen(0, '127.0.0.1', () => resolve());
-        });
-
-        const address = server.address();
-        if (typeof address === 'object' && address && address.port) {
-            this.proxyServer = server;
-            this.proxyPort = address.port;
-            const proxyUrl = `http://127.0.0.1:${address.port}`;
-            this.outputChannel.appendLine(`[preview-proxy] listening at ${proxyUrl}`);
-            this.updateWebviewContent(proxyUrl);
-        } else {
-            server.close();
-            throw new Error('Failed to start proxy server');
-        }
-    }
-
-    private async stopProxy(): Promise<void> {
-        if (!this.proxyServer) return;
-        await new Promise<void>((resolve) => this.proxyServer!.close(() => resolve()));
-        this.proxyServer = undefined;
-        this.proxyPort = undefined;
     }
 
     private showInstallError(): void {
