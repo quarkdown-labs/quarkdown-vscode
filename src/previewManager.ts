@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { QuarkdownServer, ServerEvents } from './quarkdownServer';
+import { QuarkdownLivePreviewServer, ServerEvents } from './quarkdownServer';
 import { PreviewWebview, WebviewEvents } from './previewWebview';
 import { DEFAULT_PREVIEW_PORT } from './constants';
 import { Strings } from './strings';
@@ -10,12 +10,12 @@ import { Strings } from './strings';
  */
 export class QuarkdownPreviewManager {
     private static instance: QuarkdownPreviewManager;
-    private server: QuarkdownServer;
+    private server: QuarkdownLivePreviewServer;
     private webview: PreviewWebview;
     private currentFilePath: string | undefined;
 
     private constructor() {
-        this.server = new QuarkdownServer();
+        this.server = new QuarkdownLivePreviewServer();
         this.webview = new PreviewWebview();
         this.setupEventHandlers();
     }
@@ -60,8 +60,10 @@ export class QuarkdownPreviewManager {
         // Configure webview with allowed origins
         const port = DEFAULT_PREVIEW_PORT;
         this.webview.setAllowedOrigins([
+            `http://localhost:${port}/live`,
+            `http://127.0.0.1:${port}/live`,
             `http://localhost:${port}`,
-            `http://127.0.0.1:${port}`
+            `http://127.0.0.1:${port}`,
         ]);
 
         // Show webview with loading screen immediately

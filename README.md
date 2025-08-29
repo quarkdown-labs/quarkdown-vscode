@@ -59,4 +59,4 @@ A: Function call highlighting happens on the server side via semantic tokens.
 This should be enabled by default, but in case it isn't working properly, make sure `editor.semanticHighlighting.enabled` is set to `true`.
 
 **Q: Why is my live preview delayed?**  
-A: Compilation happens almost instantly, but it's triggered only when the document is saved. To improve the experience you might consider lowering the auto-save delay in your VS Code settings (`files.autoSaveDelay`) but beware VS Code may block this high throughput, resulting in a proxy error.
+A: Compilation happens almost instantly, but it's triggered only when the document is saved. To improve the experience you might consider lowering the auto-save delay in your VS Code settings (`files.autoSaveDelay`) but beware of throttling due to high throughput.

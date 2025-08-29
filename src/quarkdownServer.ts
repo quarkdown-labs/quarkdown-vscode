@@ -13,9 +13,9 @@ export interface ServerEvents {
 }
 
 /**
- * Manages the Quarkdown server process and network communication
+ * Manages the Quarkdown server process and network communication for live preview.
  */
-export class QuarkdownServer {
+export class QuarkdownLivePreviewServer {
     private process: cp.ChildProcess | undefined;
     private readonly outputChannel: vscode.OutputChannel;
     private readonly port: number = DEFAULT_PREVIEW_PORT;
@@ -23,7 +23,7 @@ export class QuarkdownServer {
     private isStopping = false;
     private events: ServerEvents | undefined;
 
-    public readonly url: string = `http://localhost:${this.port}`;
+    public readonly url: string = `http://localhost:${this.port}/live`;
 
     constructor() {
         this.outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNELS.preview);
