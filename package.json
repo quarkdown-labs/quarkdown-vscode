@@ -98,8 +98,11 @@
     ]
   },
   "configurationDefaults": {
-    "quarkdown": {
-      "editor.semanticHighlighting.enabled": true
+    "[quarkdown]": {
+      "editor.semanticHighlighting.enabled": true,
+      "editor.tabSize": 4,
+      "editor.insertSpaces": true,
+      "editor.detectIndentation": false
     }
   },
   "scripts": {
