@@ -10,3 +10,4 @@ webpack.config.js
 .git/**
 .github/**
 **/*.svg
+test_qd/**
