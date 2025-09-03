@@ -1,0 +1,20 @@
+# Ignore everything
+*
+
+# Keep directories so negated file patterns can match inside them
+!*/
+node_modules/
+
+# Allow image files (including .gif)
+!*.gif
+!*.png
+!*.jpg
+!*.jpeg
+!*.svg
+!*.webp
+!*.bmp
+!*.tif
+!*.tiff
+
+# Keep this gitignore
+!.gitignore
