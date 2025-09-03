@@ -29,13 +29,13 @@ Easily export your Quarkdown document to PDF from the menu command or by using t
 
 Documentation for functions can be accessed on hover or during completion.
 
-`TODO img`
+![Documentation demo](https://raw.githubusercontent.com/quarkdown-labs/quarkdown-vscode/refs/heads/project-files/docs.png)
 
 ### Diagnostics
 
 Diagnostics cover common function call mistakes, helping you identify and fix issues quickly.
 
-`TODO img`
+![Diagnostics demo](https://raw.githubusercontent.com/quarkdown-labs/quarkdown-vscode/refs/heads/project-files/diagnostics.png)
 
 ## Requirements
 
