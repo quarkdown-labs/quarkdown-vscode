@@ -4,18 +4,6 @@ This extension provides [Quarkdown](https://quarkdown.com/) language support for
 
 ## Features
 
-### Syntax highlighting
-
-Syntax highlighting is provided for both function calls and base Markdown content.
-
-`TODO img`
-
-### User-first completions
-
-Receive comprehensive completions for functions, parameters and values, with a flow designed to get your work done faster.
-
-`TODO gif`
-
 ### In-editor live preview
 
 Launch the live preview from the menu command or by using the keyboard shortcut `Ctrl/⌘+Shift+V`.
@@ -24,6 +12,12 @@ Live preview will let you see your changes in real-time as you edit your Quarkdo
 vastly boosting your productivity.
 
 ![Live preview demo](https://raw.githubusercontent.com/quarkdown-labs/quarkdown-vscode/refs/heads/project-files/live-preview.gif)
+
+### User-first completions
+
+Receive comprehensive completions for functions, parameters and values, with a flow designed to get your work done faster.
+
+![Completions demo](https://raw.githubusercontent.com/quarkdown-labs/quarkdown-vscode/refs/heads/project-files/completions.gif)
 
 ### PDF export
 
