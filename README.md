@@ -21,9 +21,9 @@ Receive comprehensive completions for functions, parameters and values, with a f
 Launch the live preview from the menu command or by using the keyboard shortcut `Ctrl/⌘+Shift+V`.
 
 Live preview will let you see your changes in real-time as you edit your Quarkdown files,
-boosting your productivity and helping you catch errors early.
+vastly boosting your productivity.
 
-`TODO gif`
+![Live preview demo](https://raw.githubusercontent.com/quarkdown-labs/quarkdown-vscode/refs/heads/project-files/live-preview.gif)
 
 ### PDF export
 
