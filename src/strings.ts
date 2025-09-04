@@ -13,5 +13,13 @@ export const Strings = {
     previewStopped: 'Live preview stopped.',
     previewNotRunning: 'No preview is currently running.',
     lsRestarted: 'Quarkdown Language Server restarted successfully.',
-    lsRestartFailed: 'Failed to restart Language Server.'
+    lsRestartFailed: 'Failed to restart Language Server.',
+
+    // PDF export
+    chooseFolder: 'Choose Output Folder',
+    saveBeforeExport: 'Please save the file before exporting.',
+    quarkdownNotFound: 'Quarkdown not found. Please install Quarkdown first.',
+    exportFailed: 'PDF export failed',
+    exportSucceeded: 'PDF exported successfully.',
+    exportPdfNotFound: 'Output PDF was not created'
 } as const;

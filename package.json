@@ -50,6 +50,11 @@
       {
         "command": "quarkdown.restartLanguageServer",
         "title": "Restart Quarkdown Language Server"
+      },
+      {
+        "command": "quarkdown.exportPdf",
+        "title": "Export Quarkdown to PDF",
+        "icon": "$(file-pdf)"
       }
     ],
     "menus": {
@@ -58,6 +63,11 @@
           "command": "quarkdown.startPreview",
           "when": "resourceExtname == .qd",
           "group": "navigation@1"
+        },
+        {
+          "command": "quarkdown.exportPdf",
+          "when": "resourceExtname == .qd",
+          "group": "navigation@2"
         }
       ],
       "commandPalette": [
@@ -67,6 +77,10 @@
         },
         {
           "command": "quarkdown.stopPreview",
+          "when": "resourceExtname == .qd"
+        },
+        {
+          "command": "quarkdown.exportPdf",
           "when": "resourceExtname == .qd"
         }
       ]
@@ -109,7 +123,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "build": "npm run compile && vsce package"
+    "build": "yarn compile && vsce package"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

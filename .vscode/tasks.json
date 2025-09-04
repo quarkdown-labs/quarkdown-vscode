@@ -11,12 +11,33 @@
 			"problemMatcher": [],
 			"group": "build",
 			"command": "npm",
-			"args": ["run", "compile"]
+			"args": [
+				"run",
+				"compile"
+			]
 		},
 		{
 			"label": "prepare-compile",
-			"dependsOn": ["compile"],
-			"runOptions": { "runOn": "default" }
+			"dependsOn": [
+				"compile"
+			],
+			"runOptions": {
+				"runOn": "default"
+			}
+		},
+		{
+			"label": "compile",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"compile"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
 		}
 	]
 }

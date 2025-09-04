@@ -4,6 +4,7 @@ import { QuarkdownPreviewManager } from './previewManager';
 import { isQuarkdownFile } from './utils';
 import { Strings } from './strings';
 import { VIEW_TYPES } from './constants';
+import { exportToPDF } from './pdfExport';
 
 let client: QuarkdownLanguageClient;
 
@@ -19,7 +20,8 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
         vscode.commands.registerCommand('quarkdown.startPreview', startPreview),
         vscode.commands.registerCommand('quarkdown.stopPreview', stopPreview),
-        vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => restart(context))
+        vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => restart(context)),
+        vscode.commands.registerCommand('quarkdown.exportPdf', exportToPDF)
     );
 
     // Ensure preview webview is not restored on vscode startup
