@@ -19,6 +19,7 @@ export const Strings = {
     chooseFolder: 'Choose Output Folder',
     saveBeforeExport: 'Please save the file before exporting.',
     quarkdownNotFound: 'Quarkdown not found. Please install Quarkdown first.',
+    exportInProgress: 'Exporting to PDF…',
     exportFailed: 'PDF export failed',
     exportSucceeded: 'PDF exported successfully.',
     exportPdfNotFound: 'Output PDF was not created'

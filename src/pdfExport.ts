@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
-import { getQuarkdownCommandArgs, isQuarkdownFile } from './utils';
+import { getQuarkdownCommandArgs, getQuarkdownCompilerCommandArgs, isQuarkdownFile } from './utils';
 import { Strings } from './strings';
 
 /** Export the active .qd file to PDF. */
@@ -18,38 +18,21 @@ export async function exportToPDF(): Promise<void> {
         return;
     }
 
-    const selection = await vscode.window.showOpenDialog({
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: false,
-        openLabel: Strings.chooseFolder,
-        defaultUri: vscode.workspace.workspaceFolders?.[0]?.uri
-    });
-
-    if (!selection || selection.length === 0) {
-        return;
-    }
-
-    const outDir = selection[0].fsPath;
     const filePath = editor.document.fileName;
-
-    const cwd = path.dirname(filePath);
-
-    const args = ['c', path.basename(filePath), '--pdf', '-o', outDir];
-    const { command, args: resolvedArgs } = getQuarkdownCommandArgs(args);
+    const { command, args, cwd } = getQuarkdownCompilerCommandArgs(filePath, ['--pdf']);
 
     const taskName = 'Quarkdown PDF Export';
     const output = vscode.window.createOutputChannel(taskName);
 
-    output.show(true);
-    output.appendLine(`[export] Running: ${command} ${resolvedArgs.join(' ')}`);
-    output.appendLine(`[export] cwd: ${cwd}`);
+    output.appendLine(`[export] Running: ${command} ${args.join(' ')}`);
+
+    vscode.window.showInformationMessage(Strings.exportInProgress);
 
     try {
         let stderrBuf = '';
 
         await new Promise<void>((resolve, reject) => {
-            const child = cp.execFile(command, resolvedArgs, { cwd });
+            const child = cp.execFile(command, args, { cwd });
 
             child.stdout?.on('data', (d) => output.append(d.toString()));
             child.stderr?.on('data', (d) => {

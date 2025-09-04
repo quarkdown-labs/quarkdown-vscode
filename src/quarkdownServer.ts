@@ -37,7 +37,7 @@ export class QuarkdownLivePreviewServer {
     public async start(filePath: string): Promise<void> {
         await this.stop();
 
-        const { command, args } = getQuarkdownCompilerCommandArgs(filePath, [
+        const { command, args, cwd } = getQuarkdownCompilerCommandArgs(filePath, [
             '--preview', '--watch',
             '--server-port', this.port.toString()
         ]);
@@ -45,8 +45,8 @@ export class QuarkdownLivePreviewServer {
         this.outputChannel.appendLine(`[server] Starting: ${command} ${args.join(' ')}`);
 
         try {
-            this.process = cp.execFile(command, args, { cwd: path.dirname(filePath) });
-            
+            this.process = cp.execFile(command, args, { cwd });
+
             this.process.on('exit', (code, signal) => {
                 this.outputChannel.appendLine(`[server] Process exited (code=${code} signal=${signal})`);
                 this.cleanup();

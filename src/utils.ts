@@ -23,13 +23,14 @@ export function getQuarkdownCommandArgs(additionalArgs: string[]): { command: st
  * Like {@link getQuarkdownCommandArgs}, but with specific handy defaults for compilation.
  * @param filePath Path to the main Quarkdown source file to compile.
  */
-export function getQuarkdownCompilerCommandArgs(filePath: string, additionalArgs: string[]): { command: string; args: string[] } {
-    return getQuarkdownCommandArgs([
+export function getQuarkdownCompilerCommandArgs(filePath: string, additionalArgs: string[]): { command: string; args: string[]; cwd: string } {
+    const { command, args } = getQuarkdownCommandArgs([
         'c', path.basename(filePath),
         '--out', config.getOutputDirectory(),
         '--browser', 'none',
         ...additionalArgs
     ]);
+    return { command, args, cwd: path.dirname(filePath) };
 }
 
 /** Determine whether the given file name appears to be a Quarkdown document. */
