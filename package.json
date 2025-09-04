@@ -91,6 +91,12 @@
         "key": "shift+ctrl+v",
         "mac": "shift+cmd+v",
         "when": "editorLangId == quarkdown && !notebookEditorFocused"
+      },
+      {
+        "command": "quarkdown.exportPdf",
+        "key": "shift+ctrl+p",
+        "mac": "shift+cmd+p",
+        "when": "editorLangId == quarkdown && !notebookEditorFocused"
       }
     ],
     "configuration": [
