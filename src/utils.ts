@@ -13,8 +13,8 @@ import path from 'path';
 export function getQuarkdownCommandArgs(additionalArgs: string[]): { command: string; args: string[] } {
     const executablePath = config.getExecutablePath();
     if (process.platform === 'win32') {
-        const bat = executablePath.endsWith('.bat') ? executablePath : `${executablePath}.bat`;
-        return { command: 'cmd', args: ['/c', bat, ...additionalArgs] };
+        const launcher = path.extname(executablePath) ? executablePath : `${executablePath}.cmd`;
+        return { command: 'cmd', args: ['/c', launcher, ...additionalArgs] };
     }
     return { command: executablePath, args: additionalArgs };
 }
