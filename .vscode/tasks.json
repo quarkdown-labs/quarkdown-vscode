@@ -10,9 +10,8 @@
 			},
 			"problemMatcher": [],
 			"group": "build",
-			"command": "npm",
+			"command": "yarn",
 			"args": [
-				"run",
 				"compile"
 			]
 		},
@@ -28,9 +27,8 @@
 		{
 			"label": "compile",
 			"type": "shell",
-			"command": "npm",
+			"command": "yarn",
 			"args": [
-				"run",
 				"compile"
 			],
 			"isBackground": false,
