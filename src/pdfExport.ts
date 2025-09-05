@@ -1,66 +1,59 @@
 import * as vscode from 'vscode';
-import * as cp from 'child_process';
-import * as path from 'path';
-import * as fs from 'fs';
-import { getQuarkdownCommandArgs, getQuarkdownCompilerCommandArgs, isQuarkdownFile } from './utils';
+import { PdfExportService, PdfExportConfig, PdfExportEvents } from './core/pdfExportService';
+import { VSCodeLogger } from './vscode/vscodeLogger';
+import { getQuarkdownConfig } from './config';
+import { getActiveQuarkdownDocument } from './utils';
 import { Strings } from './strings';
 
-/** Export the active .qd file to PDF. */
+/**
+ * Export the active .qd file to PDF using VS Code integration.
+ * Provides user feedback through VS Code's notification system.
+ */
 export async function exportToPDF(): Promise<void> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || !isQuarkdownFile(editor.document.fileName)) {
+    const document = getActiveQuarkdownDocument();
+    if (!document) {
         vscode.window.showWarningMessage(Strings.openQuarkdownFirst);
         return;
     }
 
-    if (editor.document.isDirty && !(await editor.document.save())) {
+    if (document.isDirty && !(await document.save())) {
         vscode.window.showErrorMessage(Strings.saveBeforeExport);
         return;
     }
 
-    const filePath = editor.document.fileName;
-    const { command, args, cwd } = getQuarkdownCompilerCommandArgs(filePath, ['--pdf']);
+    const config = getQuarkdownConfig();
+    const logger = new VSCodeLogger('Quarkdown PDF Export');
+    
+    const exportConfig: PdfExportConfig = {
+        executablePath: config.executablePath,
+        filePath: document.fileName,
+        outputDirectory: config.outputDirectory,
+        logger: logger
+    };
 
-    const taskName = 'Quarkdown PDF Export';
-    const output = vscode.window.createOutputChannel(taskName);
+    const exportService = new PdfExportService();
 
-    output.appendLine(`[export] Running: ${command} ${args.join(' ')}`);
-
+    // Show initial progress message
     vscode.window.showInformationMessage(Strings.exportInProgress);
 
+    const events: PdfExportEvents = {
+        onSuccess: () => {
+            vscode.window.showInformationMessage(Strings.exportSucceeded);
+            logger.dispose();
+        },
+        onError: (error) => {
+            vscode.window.showErrorMessage(error);
+            logger.dispose();
+        }
+        // onProgress events are automatically logged by the service
+    };
+
     try {
-        let stderrBuf = '';
-
-        await new Promise<void>((resolve, reject) => {
-            const child = cp.execFile(command, args, { cwd });
-
-            child.stdout?.on('data', (d) => output.append(d.toString()));
-            child.stderr?.on('data', (d) => {
-                const s = d.toString();
-                stderrBuf += s;
-                output.append(s);
-            });
-
-            child.on('error', (err: NodeJS.ErrnoException) => {
-                const msg = err.code === 'ENOENT' ? Strings.quarkdownNotFound : err.message;
-                reject(new Error(msg));
-            });
-
-            child.on('close', (code) => {
-                if (code !== 0) {
-                    reject(new Error(`${Strings.exportFailed}: (code ${code})`));
-                    return;
-                }
-                if (stderrBuf.trim()) {
-                    reject(new Error(`${Strings.exportFailed}: ${stderrBuf.trim()}`));
-                } else {
-                    resolve();
-                }
-            });
-        });
-
-        vscode.window.showInformationMessage(Strings.exportSucceeded);
-    } catch (err: any) {
-        vscode.window.showErrorMessage(`${err?.message ?? String(err)}`);
+        await exportService.exportToPdf(exportConfig, events);
+    } catch (error) {
+        const errorMessage = `Export failed: ${error}`;
+        vscode.window.showErrorMessage(errorMessage);
+        logger.error(errorMessage);
+        logger.dispose();
     }
 }

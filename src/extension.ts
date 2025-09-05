@@ -1,39 +1,90 @@
 import * as vscode from 'vscode';
 import { QuarkdownLanguageClient } from './client';
 import { QuarkdownPreviewManager } from './previewManager';
-import { isQuarkdownFile } from './utils';
-import { Strings } from './strings';
+import { QuarkdownCommands } from './commands';
 import { VIEW_TYPES } from './constants';
-import { exportToPDF } from './pdfExport';
 
 let client: QuarkdownLanguageClient;
 
-/** Extension activation entrypoint. */
+/**
+ * Extension activation entrypoint.
+ * Sets up language configuration, registers commands, and initializes services.
+ */
 export function activate(context: vscode.ExtensionContext): void {
+    // Initialize and start the language client
     client = new QuarkdownLanguageClient();
     void client.start(context);
 
+    // Configure Quarkdown language settings
+    setupLanguageConfiguration();
+
+    // Register all extension commands
+    registerCommands(context);
+
+    // Set up webview panel serializer to prevent restoration on startup
+    registerWebviewSerializer(context);
+
+    // Set up document close handler for automatic preview cleanup
+    registerDocumentCloseHandler(context);
+}
+
+/**
+ * Configure language-specific settings for Quarkdown files.
+ */
+function setupLanguageConfiguration(): void {
     vscode.languages.setLanguageConfiguration('quarkdown', {
         wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g
     });
+}
 
-    context.subscriptions.push(
-        vscode.commands.registerCommand('quarkdown.startPreview', startPreview),
-        vscode.commands.registerCommand('quarkdown.stopPreview', stopPreview),
-        vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => restart(context)),
-        vscode.commands.registerCommand('quarkdown.exportPdf', exportToPDF)
-    );
+/**
+ * Register all extension commands with their handlers.
+ */
+function registerCommands(context: vscode.ExtensionContext): void {
+    const commands = [
+        vscode.commands.registerCommand('quarkdown.startPreview', QuarkdownCommands.startPreview),
+        vscode.commands.registerCommand('quarkdown.stopPreview', QuarkdownCommands.stopPreview),
+        vscode.commands.registerCommand('quarkdown.exportPdf', QuarkdownCommands.exportToPdf),
+        vscode.commands.registerCommand('quarkdown.restartLanguageServer', () => {
+            return QuarkdownCommands.restartLanguageServer(
+                context,
+                async (ctx) => {
+                    const newClient = new QuarkdownLanguageClient();
+                    await newClient.start(ctx);
+                    return newClient;
+                },
+                () => client,
+                (newClient) => { client = newClient; }
+            );
+        })
+    ];
 
-    // Ensure preview webview is not restored on vscode startup
+    context.subscriptions.push(...commands);
+}
+
+/**
+ * Register webview panel serializer to prevent unwanted restoration.
+ * Ensures preview webviews are not restored when VS Code starts up.
+ */
+function registerWebviewSerializer(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
         vscode.window.registerWebviewPanelSerializer(VIEW_TYPES.preview, {
             async deserializeWebviewPanel(panel: vscode.WebviewPanel): Promise<void> {
-                try { panel.dispose(); } catch { }
+                try { 
+                    panel.dispose(); 
+                } catch (error) {
+                    // Ignore disposal errors
+                }
             }
         })
     );
+}
 
-    // Stop preview automatically when its document closes.
+/**
+ * Register document close handler for automatic preview cleanup.
+ * Stops preview when its source document is closed.
+ */
+function registerDocumentCloseHandler(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
         vscode.workspace.onDidCloseTextDocument(document => {
             const manager = QuarkdownPreviewManager.getInstance();
@@ -44,46 +95,19 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 }
 
-/** Start a live preview for the active Quarkdown document. */
-async function startPreview(): Promise<void> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || !isQuarkdownFile(editor.document.fileName)) {
-        vscode.window.showWarningMessage(Strings.openQuarkdownFirst);
-        return;
-    }
-    if (editor.document.isDirty && !(await editor.document.save())) {
-        vscode.window.showErrorMessage(Strings.saveBeforePreview);
-        return;
-    }
-    await QuarkdownPreviewManager.getInstance().startPreview(editor.document.fileName);
-}
-
-/** Stop an active live preview (if one is running). */
-async function stopPreview(): Promise<void> {
-    const previewManager = QuarkdownPreviewManager.getInstance();
-    if (previewManager.isPreviewRunning()) {
-        await previewManager.stopPreview();
-        vscode.window.showInformationMessage(Strings.previewStopped);
-    } else {
-        vscode.window.showInformationMessage(Strings.previewNotRunning);
-    }
-}
-
-/** Restart the Quarkdown language server. */
-async function restart(context: vscode.ExtensionContext): Promise<void> {
-    try {
-        if (client) await client.stop();
-        client = new QuarkdownLanguageClient();
-        await client.start(context);
-        vscode.window.showInformationMessage(Strings.lsRestarted);
-    } catch {
-        vscode.window.showErrorMessage(Strings.lsRestartFailed);
-    }
-}
-
-/** Extension deactivation hook. */
+/**
+ * Extension deactivation hook.
+ * Cleans up resources and stops services.
+ */
 export async function deactivate(): Promise<void> {
-    await QuarkdownPreviewManager.getInstance().stopPreview();
-    return client.stop();
+    // Stop preview and clean up resources
+    const previewManager = QuarkdownPreviewManager.getInstance();
+    previewManager.dispose();
+
+    // Stop language client
+    if (client) {
+        client.dispose();
+        await client.stop();
+    }
 }
 

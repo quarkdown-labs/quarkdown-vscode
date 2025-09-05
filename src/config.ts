@@ -10,6 +10,16 @@ const CONFIG_KEYS = {
 } as const;
 
 /**
+ * Configuration interface for type safety.
+ */
+export interface QuarkdownConfig {
+    /** Path to the Quarkdown executable */
+    executablePath: string;
+    /** Output directory for Quarkdown artifacts */
+    outputDirectory: string;
+}
+
+/**
  * Gets a configuration value, falling back to a default if not set or invalid.
  *
  * @param key Configuration key (under the quarkdown root).
@@ -30,7 +40,32 @@ function getConfigValue<T>(
     return defaultValue;
 }
 
-// Configurations
+/**
+ * Validates that a string value is non-empty.
+ */
+const isNonEmptyString = (value: string): boolean => value.length > 0;
 
-export const getExecutablePath = () => getConfigValue<string>(CONFIG_KEYS.executablePath, 'quarkdown');
-export const getOutputDirectory = () => getConfigValue<string>(CONFIG_KEYS.outputDirectory, 'output', value => value.length > 0);
+// Configuration getters with better documentation and validation
+
+/**
+ * Get the configured path to the Quarkdown executable.
+ * Defaults to 'quarkdown' if not configured.
+ */
+export const getExecutablePath = (): string => 
+    getConfigValue<string>(CONFIG_KEYS.executablePath, 'quarkdown');
+
+/**
+ * Get the configured output directory for Quarkdown artifacts.
+ * Defaults to 'output' if not configured or if empty.
+ */
+export const getOutputDirectory = (): string => 
+    getConfigValue<string>(CONFIG_KEYS.outputDirectory, 'output', isNonEmptyString);
+
+/**
+ * Get all Quarkdown configuration as a typed object.
+ * Useful for passing configuration to pure functions that don't depend on VS Code.
+ */
+export const getQuarkdownConfig = (): QuarkdownConfig => ({
+    executablePath: getExecutablePath(),
+    outputDirectory: getOutputDirectory()
+});

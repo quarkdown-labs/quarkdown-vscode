@@ -1,10 +1,9 @@
-import * as vscode from 'vscode';
-import * as cp from 'child_process';
 import * as path from 'path';
-import * as http from 'http';
-import { getQuarkdownCompilerCommandArgs } from './utils';
-import { DEFAULT_PREVIEW_PORT, OUTPUT_CHANNELS } from './constants';
-import { Strings } from './strings';
+import { QuarkdownServer, QuarkdownServerEvents } from './core/quarkdownServer';
+import { QuarkdownCommandBuilder } from './core/commandBuilder';
+import { VSCodeLogger } from './vscode/vscodeLogger';
+import { getQuarkdownConfig } from './config';
+import { OUTPUT_CHANNELS } from './constants';
 
 export interface ServerEvents {
     onReady: (url: string) => void;
@@ -13,20 +12,21 @@ export interface ServerEvents {
 }
 
 /**
- * Manages the Quarkdown server process and network communication for live preview.
+ * VS Code-specific wrapper around the core QuarkdownServer.
+ * Provides VS Code integration while delegating core functionality
+ * to the platform-independent QuarkdownServer class.
  */
 export class QuarkdownLivePreviewServer {
-    private process: cp.ChildProcess | undefined;
-    private readonly outputChannel: vscode.OutputChannel;
-    private readonly port: number = DEFAULT_PREVIEW_PORT;
-    private serverReadyTimer: NodeJS.Timeout | undefined;
-    private isStopping = false;
+    private server: QuarkdownServer | undefined;
+    private readonly logger: VSCodeLogger;
     private events: ServerEvents | undefined;
 
-    public readonly url: string = `http://localhost:${this.port}/live`;
-
     constructor() {
-        this.outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNELS.preview);
+        this.logger = new VSCodeLogger(OUTPUT_CHANNELS.preview);
+    }
+
+    public get url(): string {
+        return this.server?.url ?? 'http://localhost:8099/live';
     }
 
     public setEventHandlers(events: ServerEvents): void {
@@ -37,128 +37,65 @@ export class QuarkdownLivePreviewServer {
     public async start(filePath: string): Promise<void> {
         await this.stop();
 
-        const { command, args, cwd } = getQuarkdownCompilerCommandArgs(filePath, [
-            '--preview', '--watch',
-            '--server-port', this.port.toString()
-        ]);
+        const config = getQuarkdownConfig();
         
-        this.outputChannel.appendLine(`[server] Starting: ${command} ${args.join(' ')}`);
+        this.server = new QuarkdownServer({
+            executablePath: config.executablePath,
+            filePath: path.basename(filePath),
+            cwd: path.dirname(filePath),
+            logger: this.logger
+        });
 
-        try {
-            this.process = cp.execFile(command, args, { cwd });
-
-            this.process.on('exit', (code, signal) => {
-                this.outputChannel.appendLine(`[server] Process exited (code=${code} signal=${signal})`);
+        // Set up event forwarding
+        const serverEvents: QuarkdownServerEvents = {
+            onReady: (url) => {
+                this.events?.onReady(url);
+            },
+            onError: (error) => {
+                this.events?.onError(error);
+            },
+            onExit: (code, signal) => {
                 this.cleanup();
                 this.events?.onExit(code, signal);
-            });
-            
-            this.process.on('error', (error: NodeJS.ErrnoException) => {
-                this.outputChannel.appendLine(`[server] Process error: ${error.message}`);
-                const errorMessage = error.code === 'ENOENT' 
-                    ? 'Quarkdown not found. Please install Quarkdown first.'
-                    : error.message;
-                this.cleanup();
-                this.events?.onError(errorMessage);
-            });
+            }
+        };
 
-            // Wait for the server to become ready
-            void this.waitForServerReady(30, 250)
-                .then((ready) => {
-                    if (!ready) {
-                        this.outputChannel.appendLine('[server] Server did not become ready in initial window; continuing to poll.');
-                        this.startContinuousServerPolling();
-                        return;
-                    }
-                    this.outputChannel.appendLine('[server] Server is ready.');
-                    this.events?.onReady(this.url);
-                })
-                .catch((err) => {
-                    this.outputChannel.appendLine(`[server] waitForServerReady error: ${err}`);
-                    this.events?.onError(`Server startup error: ${err}`);
-                });
+        this.server.setEventHandlers(serverEvents);
 
+        try {
+            await this.server.start();
         } catch (error) {
-            this.outputChannel.appendLine(`[server] Failed to start: ${error}`);
+            this.logger.error(`Failed to start server: ${error}`);
             this.events?.onError(`Failed to start server: ${error}`);
         }
     }
 
     /** Stop the server process */
     public async stop(): Promise<void> {
-        if (this.isStopping) return;
-        this.isStopping = true;
-
-        if (this.process?.pid) {
-            const pid = this.process.pid;
-            this.outputChannel.appendLine(`[server] Stopping process ${pid}`);
-            await new Promise<void>((resolve) => {
-                if (process.platform === 'win32') {
-                    cp.exec(`taskkill /pid ${pid} /t /f`, () => resolve());
-                } else {
-                    this.process!.once('exit', () => resolve());
-                    this.process!.kill('SIGTERM');
-                }
-            });
+        if (this.server) {
+            await this.server.stop();
+            this.cleanup();
         }
-
-        this.cleanup();
-        this.isStopping = false;
     }
 
     public isRunning(): boolean {
-        return !!this.process;
+        return this.server?.isRunning() ?? false;
     }
 
     /** Check if the server is ready to accept connections */
     public async isReady(): Promise<boolean> {
-        return this.waitForServerReady(1, 200);
+        return this.server?.isReady() ?? false;
     }
 
     private cleanup(): void {
-        this.process = undefined;
-        this.stopContinuousServerPolling();
+        this.server = undefined;
     }
 
-    /** Polls the server until it starts or we time out */
-    private async waitForServerReady(tries = 20, delayMs = 300): Promise<boolean> {
-        const tryOnce = (): Promise<boolean> =>
-            new Promise<boolean>((resolve) => {
-                const req = http.get(this.url, { timeout: delayMs }, (res) => {
-                    res.resume();
-                    resolve(true);
-                });
-                req.on('timeout', () => {
-                    req.destroy();
-                    resolve(false);
-                });
-                req.on('error', () => resolve(false));
-            });
-
-        for (let i = 0; i < tries; i++) {
-            const ok = await tryOnce();
-            if (ok) return true;
-            await new Promise(r => setTimeout(r, delayMs));
-        }
-        return false;
-    }
-
-    private startContinuousServerPolling(): void {
-        this.stopContinuousServerPolling();
-        this.serverReadyTimer = setInterval(async () => {
-            const ready = await this.waitForServerReady(1, 200);
-            if (ready) {
-                this.outputChannel.appendLine('[server] Server became ready during polling.');
-                this.events?.onReady(this.url);
-                this.stopContinuousServerPolling();
-            }
-        }, 1000);
-    }
-
-    private stopContinuousServerPolling(): void {
-        if (this.serverReadyTimer) {
-            clearInterval(this.serverReadyTimer);
-            this.serverReadyTimer = undefined;
-        }
+    /**
+     * Dispose of resources when no longer needed.
+     * Should be called during extension deactivation.
+     */
+    public dispose(): void {
+        this.logger.dispose();
     }
 }
