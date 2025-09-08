@@ -137,7 +137,8 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "build": "yarn compile && vsce package"
+    "build": "yarn compile && vsce package",
+    "vscode:prepublish": "tsc -p ./"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",
