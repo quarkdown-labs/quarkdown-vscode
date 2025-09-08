@@ -132,10 +132,9 @@ export class PreviewWebview {
      */
     private getWebviewHtml(): string {
         // Find the extension to get the correct path to assets
-        const ext = vscode.extensions.getExtension('Quarkdown.quarkdown-vscode')
-            || vscode.extensions.all.find(e => e.packageJSON?.name === 'quarkdown-vscode');
-        
-        const baseUri = ext ? ext.extensionUri : vscode.Uri.file(path.dirname(__dirname));
+        const containingExt = vscode.extensions.all.find(e => __dirname.startsWith(e.extensionUri.fsPath));
+
+        const baseUri = containingExt?.extensionUri ?? vscode.Uri.file(path.dirname(__dirname));
         const htmlPath = vscode.Uri.joinPath(baseUri, 'assets', 'preview.html');
         
         let htmlContent: string;
