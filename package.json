@@ -5,6 +5,10 @@
   "icon": "images/icon.png",
   "version": "1.0.0",
   "publisher": "Quarkdown",
+  "galleryBanner": {
+    "color": "#2a4f3b",
+    "theme": "dark"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/quarkdown-labs/quarkdown-vscode"
