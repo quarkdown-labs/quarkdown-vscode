@@ -74,8 +74,10 @@ export class QuarkdownPreviewManager {
         this.webview.setAllowedOrigins([
             `http://localhost:${port}/live`,
             `http://127.0.0.1:${port}/live`,
+            `http://0.0.0.0:${port}/live`,
             `http://localhost:${port}`,
             `http://127.0.0.1:${port}`,
+            `http://0.0.0.0:${port}`,
         ]);
 
         // Show webview with loading screen immediately for better UX
