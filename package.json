@@ -13,6 +13,9 @@
     "type": "git",
     "url": "https://github.com/quarkdown-labs/quarkdown-vscode"
   },
+  "sponsor": {
+    "url": "https://github.com/sponsors/iamgio"
+  },
   "engines": {
     "vscode": "^1.100.0",
     "node": ">=18"
