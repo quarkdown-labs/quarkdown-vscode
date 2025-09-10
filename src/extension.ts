@@ -70,8 +70,8 @@ function registerWebviewSerializer(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
         vscode.window.registerWebviewPanelSerializer(VIEW_TYPES.preview, {
             async deserializeWebviewPanel(panel: vscode.WebviewPanel): Promise<void> {
-                try { 
-                    panel.dispose(); 
+                try {
+                    panel.dispose();
                 } catch (error) {
                     // Ignore disposal errors
                 }

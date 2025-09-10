@@ -26,24 +26,24 @@ export class QuarkdownLanguageClient {
 
         const config = getQuarkdownConfig();
         const { command, args } = QuarkdownCommandBuilder.buildLanguageServerCommand(config.executablePath);
-        
-        const serverOptions: ServerOptions = { 
-            run: { command, args }, 
-            debug: { command, args } 
+
+        const serverOptions: ServerOptions = {
+            run: { command, args },
+            debug: { command, args }
         };
-        
+
         const clientOptions: LanguageClientOptions = {
             documentSelector: [{ scheme: 'file', language: 'quarkdown' }],
-            synchronize: { 
-                fileEvents: vscode.workspace.createFileSystemWatcher('**/*.qd') 
+            synchronize: {
+                fileEvents: vscode.workspace.createFileSystemWatcher('**/*.qd')
             },
             outputChannel: this.logger['outputChannel'] // Access the underlying output channel
         };
 
         this.client = new LanguageClient(
-            'quarkdownLanguageServer', 
-            'Quarkdown Language Server', 
-            serverOptions, 
+            'quarkdownLanguageServer',
+            'Quarkdown Language Server',
+            serverOptions,
             clientOptions
         );
 
@@ -90,7 +90,7 @@ export class QuarkdownLanguageClient {
     private async showLanguageServerError(): Promise<void> {
         const selection = await vscode.window.showErrorMessage(
             'Quarkdown Language Server could not start. Check the Output panel for details.',
-            'Show Output', 
+            'Show Output',
             'Learn More'
         );
 

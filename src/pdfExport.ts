@@ -23,7 +23,7 @@ export async function exportToPDF(): Promise<void> {
 
     const config = getQuarkdownConfig();
     const logger = new VSCodeLogger('Quarkdown PDF Export');
-    
+
     const exportConfig: PdfExportConfig = {
         executablePath: config.executablePath,
         filePath: document.fileName,

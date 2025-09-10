@@ -38,7 +38,7 @@ export class HttpPoller {
             if (success) {
                 return true;
             }
-            
+
             if (attempt < maxAttempts - 1) {
                 await this.delay(delayMs);
             }
@@ -60,12 +60,12 @@ export class HttpPoller {
                 res.resume(); // Consume response to free up memory
                 resolve(true);
             });
-            
+
             req.on('timeout', () => {
                 req.destroy();
                 resolve(false);
             });
-            
+
             req.on('error', () => {
                 resolve(false);
             });

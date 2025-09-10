@@ -62,7 +62,7 @@ export class PreviewWebview {
         );
 
         this.webviewPanel.webview.html = this.getWebviewHtml();
-        
+
         // Set up disposal handler
         this.webviewPanel.onDidDispose(() => {
             this.webviewPanel = undefined;
@@ -79,16 +79,16 @@ export class PreviewWebview {
         if (!this.webviewPanel) {
             this.show();
         }
-        
+
         if (this.webviewPanel) {
             this.webviewPanel.title = Strings.previewPanelTitle;
             this.webviewPanel.webview.html = this.getWebviewHtml();
-            
+
             // Post message after DOM is ready to load the preview URL
             setTimeout(() => {
-                this.webviewPanel?.webview.postMessage({ 
-                    command: 'setSrc', 
-                    url 
+                this.webviewPanel?.webview.postMessage({
+                    command: 'setSrc',
+                    url
                 });
             }, 0);
         }
@@ -136,7 +136,7 @@ export class PreviewWebview {
 
         const baseUri = containingExt?.extensionUri ?? vscode.Uri.file(path.dirname(__dirname));
         const htmlPath = vscode.Uri.joinPath(baseUri, 'assets', 'preview.html');
-        
+
         let htmlContent: string;
         try {
             htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');

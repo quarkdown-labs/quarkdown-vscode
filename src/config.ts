@@ -51,14 +51,14 @@ const isNonEmptyString = (value: string): boolean => value.length > 0;
  * Get the configured path to the Quarkdown executable.
  * Defaults to 'quarkdown' if not configured.
  */
-export const getExecutablePath = (): string => 
+export const getExecutablePath = (): string =>
     getConfigValue<string>(CONFIG_KEYS.executablePath, 'quarkdown');
 
 /**
  * Get the configured output directory for Quarkdown artifacts.
  * Defaults to 'output' if not configured or if empty.
  */
-export const getOutputDirectory = (): string => 
+export const getOutputDirectory = (): string =>
     getConfigValue<string>(CONFIG_KEYS.outputDirectory, 'output', isNonEmptyString);
 
 /**

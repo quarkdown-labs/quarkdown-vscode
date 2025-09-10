@@ -27,17 +27,17 @@ export class QuarkdownCommandBuilder {
      */
     public static buildCommand(executablePath: string, additionalArgs: string[]): Omit<QuarkdownCommand, 'cwd'> {
         if (process.platform === 'win32') {
-            // On Windows, wrap with cmd.exe and ensure .cmd extension
-            const launcher = path.extname(executablePath) ? executablePath : `${executablePath}.cmd`;
-            return { 
-                command: 'cmd', 
-                args: ['/c', launcher, ...additionalArgs] 
+            // On Windows, wrap with cmd.exe
+            const launcher = path.extname(executablePath) ? executablePath : `${executablePath}`;
+            return {
+                command: 'cmd',
+                args: ['/c', launcher, ...additionalArgs]
             };
         }
-        
-        return { 
-            command: executablePath, 
-            args: additionalArgs 
+
+        return {
+            command: executablePath,
+            args: additionalArgs
         };
     }
 
