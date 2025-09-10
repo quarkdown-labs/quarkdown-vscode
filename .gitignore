@@ -4,5 +4,6 @@ node_modules
 out/
 test/
 package-lock.json
+.DS_Store
 output/
 test_qd/
