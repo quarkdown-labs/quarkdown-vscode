@@ -68,7 +68,7 @@ export class QuarkdownPreviewManager {
         await this.stopPreview();
 
         this.currentFilePath = filePath;
-        
+
         // Configure webview with allowed origins for the preview server
         const port = DEFAULT_PREVIEW_PORT;
         this.webview.setAllowedOrigins([

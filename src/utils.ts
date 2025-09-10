@@ -27,7 +27,7 @@ export function getQuarkdownCompilerCommandArgs(filePath: string, additionalArgs
     const executablePath = config.getExecutablePath();
     const outputDir = config.getOutputDirectory();
     const commandConfig = QuarkdownCommandBuilder.buildCompileCommand(executablePath, filePath, outputDir, additionalArgs);
-    
+
     return {
         command: commandConfig.command,
         args: commandConfig.args,

@@ -40,7 +40,7 @@ export class QuarkdownCommands {
      */
     public static async stopPreview(): Promise<void> {
         const previewManager = QuarkdownPreviewManager.getInstance();
-        
+
         if (previewManager.isPreviewRunning()) {
             try {
                 await previewManager.stopPreview();
@@ -83,10 +83,10 @@ export class QuarkdownCommands {
             if (currentClient) {
                 await currentClient.stop();
             }
-            
+
             const newClient = await clientFactory(context);
             setCurrentClient(newClient);
-            
+
             vscode.window.showInformationMessage(Strings.lsRestarted);
         } catch (error) {
             vscode.window.showErrorMessage(Strings.lsRestartFailed);

@@ -87,7 +87,7 @@ export class QuarkdownServer {
             events: {
                 onError: (error) => {
                     this.logger.error(`Process error: ${error.message}`);
-                    const errorMessage = error.code === 'ENOENT' 
+                    const errorMessage = error.code === 'ENOENT'
                         ? 'Quarkdown not found. Please install Quarkdown first.'
                         : error.message;
                     this.events?.onError?.(errorMessage);
@@ -103,10 +103,10 @@ export class QuarkdownServer {
         try {
             await this.processManager.start(processConfig);
             this.logger.info(`Process started with PID: ${this.processManager.getPid()}`);
-            
+
             // Start monitoring server availability
             void this.startServerMonitoring();
-            
+
         } catch (error) {
             this.logger.error(`Failed to start process: ${error}`);
             this.events?.onError?.(`Failed to start server: ${error}`);
@@ -166,7 +166,7 @@ export class QuarkdownServer {
      */
     private startContinuousPolling(): void {
         this.stopPolling();
-        
+
         this.pollingTimer = setInterval(async () => {
             const ready = await HttpPoller.checkOnce(this.url, 200);
             if (ready) {

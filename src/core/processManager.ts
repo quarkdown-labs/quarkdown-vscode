@@ -43,7 +43,7 @@ export class ProcessManager {
         await this.stop();
 
         try {
-            this.process = cp.execFile(config.command, config.args, { cwd: config.cwd });
+            this.process = cp.spawn(config.command, config.args, { cwd: config.cwd, shell: true });
 
             if (config.events?.onStdout && this.process.stdout) {
                 this.process.stdout.on('data', (data) => {
