@@ -1,4 +1,3 @@
-import * as path from 'path';
 import { QuarkdownServer, QuarkdownServerEvents } from './core/quarkdownServer';
 import { VSCodeLogger } from './vscode/vscodeLogger';
 import { getQuarkdownConfig } from './config';
@@ -40,8 +39,8 @@ export class QuarkdownLivePreviewServer {
 
         this.server = new QuarkdownServer({
             executablePath: config.executablePath,
-            filePath: path.basename(filePath),
-            cwd: path.dirname(filePath),
+            filePath: filePath,
+            outputDirectory: config.outputDirectory,
             logger: this.logger
         });
 
