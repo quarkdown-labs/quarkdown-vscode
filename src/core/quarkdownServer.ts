@@ -1,4 +1,5 @@
 import { ProcessManager, ProcessConfig } from '../core/processManager';
+import { QuarkdownCommandBuilder } from './commandBuilder';
 import { HttpPoller } from '../core/httpPoller';
 import { Logger, NoOpLogger } from '../core/logger';
 
@@ -14,8 +15,8 @@ export interface QuarkdownServerConfig {
     additionalArgs?: string[];
     /** Server port (defaults to 8099) */
     port?: number;
-    /** Working directory (defaults to file directory) */
-    cwd?: string;
+    /** Output directory */
+    outputDirectory: string;
     /** Logger instance (defaults to NoOpLogger) */
     logger?: Logger;
 }
@@ -52,7 +53,6 @@ export class QuarkdownServer {
             port: 8099,
             additionalArgs: [],
             logger: new NoOpLogger(),
-            cwd: config.cwd || '',
             ...config
         };
         this.logger = this.config.logger;
@@ -72,18 +72,20 @@ export class QuarkdownServer {
     public async start(): Promise<void> {
         this.logger.info(`Starting Quarkdown server for ${this.config.filePath}`);
 
-        const args = [
-            'c', this.config.filePath,
-            '--preview', '--watch',
-            '--server-port', this.config.port.toString(),
-            '--browser', 'none',
-            ...this.config.additionalArgs
-        ];
+        const command = QuarkdownCommandBuilder.buildPreviewCommand(
+            this.config.executablePath,
+            this.config.filePath,
+            this.config.outputDirectory,
+            this.config.port,
+            this.config.additionalArgs
+        );
+
+        this.logger.info(`Starting Preview: ${command.command} ${command.args.join(' ')}`);
 
         const processConfig: ProcessConfig = {
-            command: this.config.executablePath,
-            args,
-            cwd: this.config.cwd,
+            command: command.command,
+            args: command.args,
+            cwd: command.cwd,
             events: {
                 onError: (error) => {
                     this.logger.error(`Process error: ${error.message}`);
