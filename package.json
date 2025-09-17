@@ -101,8 +101,8 @@
       },
       {
         "command": "quarkdown.exportPdf",
-        "key": "shift+ctrl+p",
-        "mac": "shift+cmd+p",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p",
         "when": "editorLangId == quarkdown && !notebookEditorFocused"
       }
     ],

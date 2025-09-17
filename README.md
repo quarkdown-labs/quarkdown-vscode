@@ -21,7 +21,7 @@ Receive comprehensive completions for functions, parameters and values, with a f
 
 ### PDF export
 
-Easily export your Quarkdown document to PDF from the menu command or by using the keyboard shortcut `Ctrl/⌘+Shift+P`.
+Easily export your Quarkdown document to PDF from the menu command or by using the keyboard shortcut `Ctrl/⌘+Alt+P`.
 
 ![PDF export demo](https://raw.githubusercontent.com/quarkdown-labs/quarkdown-vscode/refs/heads/project-files/pdf-export.gif)
 
