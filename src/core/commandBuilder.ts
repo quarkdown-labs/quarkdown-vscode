@@ -59,8 +59,8 @@ export class QuarkdownCommandBuilder {
         const baseCommand = this.buildCommand(executablePath, [
             'c', path.basename(filePath),
             '--out', outputDir,
+            ...additionalArgs,
             '--browser', 'none',
-            ...additionalArgs
         ]);
 
         return {
