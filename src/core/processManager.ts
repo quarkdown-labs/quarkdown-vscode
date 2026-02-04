@@ -96,12 +96,28 @@ export class ProcessManager {
         }
 
         return new Promise<void>((resolve) => {
+            let resolved = false;
+            const doResolve = () => {
+                if (!resolved) {
+                    resolved = true;
+                    resolve();
+                }
+            };
+
+            // On all platforms, wait for the exit event to ensure the process is truly gone
+            // This prevents port conflicts when restarting immediately
+            this.process!.once('exit', doResolve);
+
             if (process.platform === 'win32') {
                 // On Windows, use taskkill to force terminate the process tree
-                cp.exec(`taskkill /pid ${pid} /t /f`, () => resolve());
+                cp.exec(`taskkill /pid ${pid} /t /f`, (error) => {
+                    if (error) {
+                        // If taskkill fails (e.g. process not found), resolve to avoid hanging
+                        doResolve();
+                    }
+                });
             } else {
                 // On Unix-like systems, send SIGTERM and wait for exit
-                this.process!.once('exit', () => resolve());
                 this.process!.kill('SIGTERM');
             }
         });
