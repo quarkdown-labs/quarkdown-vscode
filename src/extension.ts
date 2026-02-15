@@ -104,7 +104,7 @@ function registerDocumentCloseHandler(context: vscode.ExtensionContext): void {
 export async function deactivate(): Promise<void> {
     // Stop preview and clean up resources
     const previewManager = QuarkdownPreviewManager.getInstance();
-    previewManager.dispose();
+    await previewManager.dispose();
 
     // Stop language client
     if (client) {

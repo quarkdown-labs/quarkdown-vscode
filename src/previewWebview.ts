@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
 import { VIEW_TYPES } from './constants';
 import { Strings } from './strings';
 
@@ -44,10 +44,10 @@ export class PreviewWebview {
      * Create and show the webview with a loading screen.
      * If webview already exists, it will be revealed and updated.
      */
-    public show(): void {
+    public async show(): Promise<void> {
         if (this.webviewPanel) {
             this.webviewPanel.reveal(vscode.ViewColumn.Beside);
-            this.webviewPanel.webview.html = this.getWebviewHtml();
+            this.webviewPanel.webview.html = await this.getWebviewHtml();
             return;
         }
 
@@ -61,7 +61,7 @@ export class PreviewWebview {
             }
         );
 
-        this.webviewPanel.webview.html = this.getWebviewHtml();
+        this.webviewPanel.webview.html = await this.getWebviewHtml();
 
         // Set up disposal handler
         this.webviewPanel.onDidDispose(() => {
@@ -75,14 +75,14 @@ export class PreviewWebview {
      *
      * @param url URL of the preview server to load
      */
-    public loadPreview(url: string): void {
+    public async loadPreview(url: string): Promise<void> {
         if (!this.webviewPanel) {
-            this.show();
+            await this.show();
         }
 
         if (this.webviewPanel) {
             this.webviewPanel.title = Strings.previewPanelTitle;
-            this.webviewPanel.webview.html = this.getWebviewHtml();
+            this.webviewPanel.webview.html = await this.getWebviewHtml();
 
             // Post message after DOM is ready to load the preview URL
             setTimeout(() => {
@@ -130,7 +130,7 @@ export class PreviewWebview {
      *
      * @returns HTML content for the webview with injected values
      */
-    private getWebviewHtml(): string {
+    private async getWebviewHtml(): Promise<string> {
         // Find the extension to get the correct path to assets
         const containingExt = vscode.extensions.all.find((e) => __dirname.startsWith(e.extensionUri.fsPath));
 
@@ -139,7 +139,7 @@ export class PreviewWebview {
 
         let htmlContent: string;
         try {
-            htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
+            htmlContent = await fs.readFile(htmlPath.fsPath, 'utf8');
         } catch (error) {
             console.error(`Failed to read webview HTML at ${htmlPath.fsPath}: ${error}`);
             return this.getFallbackHtml();

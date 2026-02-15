@@ -39,6 +39,9 @@ export interface QuarkdownServerEvents {
  * monitors its availability through HTTP polling.
  */
 export class QuarkdownServer {
+    /** Maximum number of 1-second poll attempts before giving up on server readiness. */
+    private static readonly MAX_CONTINUOUS_POLL_ATTEMPTS = 120;
+
     private readonly processManager: ProcessManager;
     private readonly config: Required<QuarkdownServerConfig>;
     private readonly logger: Logger;
@@ -165,16 +168,29 @@ export class QuarkdownServer {
 
     /**
      * Start continuous polling to detect when server becomes available.
+     * Gives up after {@link MAX_CONTINUOUS_POLL_ATTEMPTS} attempts (seconds)
+     * and emits an error to avoid polling indefinitely.
      */
     private startContinuousPolling(): void {
         this.stopPolling();
 
+        let attempts = 0;
+
         this.pollingTimer = setInterval(async () => {
+            attempts++;
+
             const ready = await HttpPoller.checkOnce(this.url, 200);
             if (ready) {
                 this.logger.info('Server became ready during polling');
                 this.events?.onReady?.(this.url);
                 this.stopPolling();
+                return;
+            }
+
+            if (attempts >= QuarkdownServer.MAX_CONTINUOUS_POLL_ATTEMPTS) {
+                this.logger.error(`Server did not become ready after ${attempts} poll attempts`);
+                this.stopPolling();
+                this.events?.onError?.('Server did not become ready in time. Please try again.');
             }
         }, 1000);
     }

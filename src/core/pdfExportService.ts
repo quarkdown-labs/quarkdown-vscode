@@ -105,18 +105,7 @@ export class PdfExportService {
 
         try {
             await this.processManager.start(processConfig);
-
-            // Wait for process to complete
-            return new Promise<void>((resolve, _reject) => {
-                const checkComplete = () => {
-                    if (!this.processManager.isRunning()) {
-                        resolve();
-                    } else {
-                        setTimeout(checkComplete, 100);
-                    }
-                };
-                checkComplete();
-            });
+            await this.processManager.waitForExit();
         } catch (error) {
             logger.error(`Failed to start PDF export: ${error}`);
             events?.onError?.(`Failed to start PDF export: ${error}`);

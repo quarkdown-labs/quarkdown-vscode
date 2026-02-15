@@ -30,6 +30,9 @@ export interface ProcessConfig {
  * of concerns and easier testing.
  */
 export class ProcessManager {
+    /** Timeout before escalating SIGTERM to SIGKILL during stop(). */
+    private static readonly KILL_TIMEOUT_MS = 5000;
+
     private process: cp.ChildProcess | undefined;
     private isTerminating = false;
 
@@ -43,7 +46,7 @@ export class ProcessManager {
         await this.stop();
 
         try {
-            this.process = cp.spawn(config.command, config.args, { cwd: config.cwd, shell: true });
+            this.process = cp.spawn(config.command, config.args, { cwd: config.cwd });
 
             if (config.events?.onStdout && this.process.stdout) {
                 this.process.stdout.on('data', (data) => {
@@ -96,15 +99,20 @@ export class ProcessManager {
 
         return new Promise<void>((resolve) => {
             let resolved = false;
+            let killTimer: NodeJS.Timeout | undefined;
+
             const doResolve = () => {
                 if (!resolved) {
                     resolved = true;
+                    if (killTimer) {
+                        clearTimeout(killTimer);
+                    }
                     resolve();
                 }
             };
 
-            // On all platforms, wait for the exit event to ensure the process is truly gone
-            // This prevents port conflicts when restarting immediately
+            // On all platforms, wait for the exit event to ensure the process is truly gone.
+            // This prevents port conflicts when restarting immediately.
             this.process!.once('exit', doResolve);
 
             if (process.platform === 'win32') {
@@ -116,8 +124,20 @@ export class ProcessManager {
                     }
                 });
             } else {
-                // On Unix-like systems, send SIGTERM and wait for exit
+                // On Unix-like systems, send SIGTERM and wait for graceful exit
                 this.process!.kill('SIGTERM');
+
+                // If the process ignores SIGTERM, escalate to SIGKILL after 5 seconds
+                killTimer = setTimeout(() => {
+                    if (!resolved) {
+                        try {
+                            this.process?.kill('SIGKILL');
+                        } catch {
+                            // Process may have already exited
+                            doResolve();
+                        }
+                    }
+                }, ProcessManager.KILL_TIMEOUT_MS);
             }
         });
     }
@@ -134,5 +154,38 @@ export class ProcessManager {
      */
     public getPid(): number | undefined {
         return this.process?.pid;
+    }
+
+    /**
+     * Wait for the current process to exit.
+     * Resolves with the exit code (null if terminated by signal).
+     * Resolves immediately if no process is running.
+     *
+     * @param timeoutMs Optional timeout in milliseconds. Rejects with an error if exceeded.
+     */
+    public waitForExit(timeoutMs?: number): Promise<number | null> {
+        if (!this.process) {
+            return Promise.resolve(null);
+        }
+
+        return new Promise<number | null>((resolve, reject) => {
+            let timer: NodeJS.Timeout | undefined;
+
+            const onExit = (code: number | null) => {
+                if (timer) {
+                    clearTimeout(timer);
+                }
+                resolve(code);
+            };
+
+            this.process!.once('exit', onExit);
+
+            if (timeoutMs !== undefined) {
+                timer = setTimeout(() => {
+                    this.process?.removeListener('exit', onExit);
+                    reject(new Error(`Process did not exit within ${timeoutMs}ms`));
+                }, timeoutMs);
+            }
+        });
     }
 }

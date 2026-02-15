@@ -201,9 +201,12 @@
 
         // Startup wrapper
 
+        /** Only allow URLs pointing to localhost to be loaded in the iframe. */
+        const LOCALHOST_URL = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?(\/|$)/;
+
         window.addEventListener('message', (event) => {
             const { command, url } = event.data || {};
-            if (command === 'setSrc' && url) {
+            if (command === 'setSrc' && url && LOCALHOST_URL.test(url)) {
                 frame.addEventListener('load', init, { once: true });
                 frame.src = url;
             }
