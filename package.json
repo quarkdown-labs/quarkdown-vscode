@@ -18,7 +18,7 @@
   },
   "engines": {
     "vscode": "^1.100.0",
-    "node": ">=18"
+    "node": ">=20"
   },
   "categories": [
     "Programming Languages"
