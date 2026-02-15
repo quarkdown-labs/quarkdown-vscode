@@ -1,0 +1,39 @@
+name: Publish
+
+on:
+  push:
+    tags: [v*]
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish to Marketplace
+    needs: ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - uses: lannonbr/vsce-action@4.0.0
+        with:
+          args: "publish ${GITHUB_REF_NAME#v} -p $VSCE_TOKEN"
+        env:
+          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+
+      - name: Push version bump to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore: bump version to ${GITHUB_REF_NAME#v}"
+          git push origin HEAD:main
