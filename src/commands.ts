@@ -6,7 +6,7 @@ import { Strings } from './strings';
 
 /**
  * Centralized command handlers for the Quarkdown extension.
- * 
+ *
  * This module provides a clean separation between command registration
  * and command implementation, making the code more maintainable and testable.
  */
@@ -67,16 +67,16 @@ export class QuarkdownCommands {
 
     /**
      * Restart the Quarkdown language server.
-     * 
+     *
      * @param context VS Code extension context
      * @param clientFactory Function to create a new language client
      * @param currentClient Current language client to restart
      */
-    public static async restartLanguageServer(
+    public static async restartLanguageServer<T extends { stop(): Promise<void> }>(
         context: vscode.ExtensionContext,
-        clientFactory: (context: vscode.ExtensionContext) => Promise<any>,
-        getCurrentClient: () => any,
-        setCurrentClient: (client: any) => void
+        clientFactory: (context: vscode.ExtensionContext) => Promise<T>,
+        getCurrentClient: () => T | undefined,
+        setCurrentClient: (client: T) => void
     ): Promise<void> {
         try {
             const currentClient = getCurrentClient();

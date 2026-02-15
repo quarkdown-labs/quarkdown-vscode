@@ -41,7 +41,7 @@ export class QuarkdownLivePreviewServer {
             executablePath: config.executablePath,
             filePath: filePath,
             outputDirectory: config.outputDirectory,
-            logger: this.logger
+            logger: this.logger,
         });
 
         // Set up event forwarding
@@ -55,7 +55,7 @@ export class QuarkdownLivePreviewServer {
             onExit: (code, signal) => {
                 this.cleanup();
                 this.events?.onExit(code, signal);
-            }
+            },
         };
 
         this.server.setEventHandlers(serverEvents);

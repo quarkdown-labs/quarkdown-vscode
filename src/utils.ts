@@ -23,21 +23,29 @@ export function getQuarkdownCommandArgs(additionalArgs: string[]): { command: st
  * @param additionalArgs Additional command line arguments.
  * @deprecated Use QuarkdownCommandBuilder.buildCompileCommand instead for better separation of concerns.
  */
-export function getQuarkdownCompilerCommandArgs(filePath: string, additionalArgs: string[]): { command: string; args: string[]; cwd: string } {
+export function getQuarkdownCompilerCommandArgs(
+    filePath: string,
+    additionalArgs: string[]
+): { command: string; args: string[]; cwd: string } {
     const executablePath = config.getExecutablePath();
     const outputDir = config.getOutputDirectory();
-    const commandConfig = QuarkdownCommandBuilder.buildCompileCommand(executablePath, filePath, outputDir, additionalArgs);
+    const commandConfig = QuarkdownCommandBuilder.buildCompileCommand(
+        executablePath,
+        filePath,
+        outputDir,
+        additionalArgs
+    );
 
     return {
         command: commandConfig.command,
         args: commandConfig.args,
-        cwd: commandConfig.cwd!
+        cwd: commandConfig.cwd!,
     };
 }
 
-/** 
+/**
  * Determine whether the given file name appears to be a Quarkdown document.
- * 
+ *
  * @param fileName File name or path to check
  * @returns true if the file has a .qd extension, false otherwise
  */
@@ -47,7 +55,7 @@ export function isQuarkdownFile(fileName: string | undefined): boolean {
 
 /**
  * Get the current active Quarkdown document from VS Code editor.
- * 
+ *
  * @returns The active Quarkdown document, or undefined if none is active
  */
 export function getActiveQuarkdownDocument(): vscode.TextDocument | undefined {
@@ -57,4 +65,3 @@ export function getActiveQuarkdownDocument(): vscode.TextDocument | undefined {
     }
     return editor.document;
 }
-

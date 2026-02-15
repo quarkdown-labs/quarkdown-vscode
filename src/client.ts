@@ -5,7 +5,7 @@ import { getQuarkdownConfig } from './config';
 import { OUTPUT_CHANNELS } from './constants';
 import { VSCodeLogger } from './vscode/vscodeLogger';
 
-/** 
+/**
  * Wrapper around VSCode's LanguageClient providing lifecycle convenience & diagnostics.
  * Handles the Quarkdown language server integration with improved error handling and logging.
  */
@@ -29,15 +29,15 @@ export class QuarkdownLanguageClient {
 
         const serverOptions: ServerOptions = {
             run: { command, args },
-            debug: { command, args }
+            debug: { command, args },
         };
 
         const clientOptions: LanguageClientOptions = {
             documentSelector: [{ scheme: 'file', language: 'quarkdown' }],
             synchronize: {
-                fileEvents: vscode.workspace.createFileSystemWatcher('**/*.qd')
+                fileEvents: vscode.workspace.createFileSystemWatcher('**/*.qd'),
             },
-            outputChannel: this.logger['outputChannel'] // Access the underlying output channel
+            outputChannel: this.logger['outputChannel'], // Access the underlying output channel
         };
 
         this.client = new LanguageClient(
@@ -48,7 +48,7 @@ export class QuarkdownLanguageClient {
         );
 
         // Set up state change monitoring
-        this.client.onDidChangeState(event => {
+        this.client.onDidChangeState((event) => {
             if (event.newState === State.Stopped) {
                 this.logger.error('Stopped unexpectedly');
             }
@@ -97,9 +97,7 @@ export class QuarkdownLanguageClient {
         if (selection === 'Show Output') {
             this.logger.show();
         } else if (selection === 'Learn More') {
-            await vscode.env.openExternal(
-                vscode.Uri.parse('https://github.com/iamgio/quarkdown')
-            );
+            await vscode.env.openExternal(vscode.Uri.parse('https://github.com/iamgio/quarkdown'));
         }
     }
 
@@ -111,4 +109,3 @@ export class QuarkdownLanguageClient {
         this.logger.dispose();
     }
 }
-

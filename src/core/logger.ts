@@ -43,7 +43,13 @@ export class ConsoleLogger implements Logger {
  * Useful for testing or when logging is not needed.
  */
 export class NoOpLogger implements Logger {
-    public info(): void { /* no-op */ }
-    public error(): void { /* no-op */ }
-    public warn(): void { /* no-op */ }
+    public info(): void {
+        /* no-op */
+    }
+    public error(): void {
+        /* no-op */
+    }
+    public warn(): void {
+        /* no-op */
+    }
 }

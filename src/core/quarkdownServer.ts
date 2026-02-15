@@ -53,7 +53,7 @@ export class QuarkdownServer {
             port: 8099,
             additionalArgs: [],
             logger: new NoOpLogger(),
-            ...config
+            ...config,
         };
         this.logger = this.config.logger;
         this.url = `http://localhost:${this.config.port}/live`;
@@ -89,17 +89,18 @@ export class QuarkdownServer {
             events: {
                 onError: (error) => {
                     this.logger.error(`Process error: ${error.message}`);
-                    const errorMessage = error.code === 'ENOENT'
-                        ? 'Quarkdown not found. Please install Quarkdown first.'
-                        : error.message;
+                    const errorMessage =
+                        error.code === 'ENOENT'
+                            ? 'Quarkdown not found. Please install Quarkdown first.'
+                            : error.message;
                     this.events?.onError?.(errorMessage);
                 },
                 onExit: (code, signal) => {
                     this.logger.info(`Process exited (code=${code} signal=${signal})`);
                     this.stopPolling();
                     this.events?.onExit?.(code, signal);
-                }
-            }
+                },
+            },
         };
 
         try {
@@ -108,7 +109,6 @@ export class QuarkdownServer {
 
             // Start monitoring server availability
             void this.startServerMonitoring();
-
         } catch (error) {
             this.logger.error(`Failed to start process: ${error}`);
             this.events?.onError?.(`Failed to start server: ${error}`);
@@ -150,7 +150,7 @@ export class QuarkdownServer {
             url: this.url,
             maxAttempts: 30,
             delayMs: 250,
-            timeout: 250
+            timeout: 250,
         });
 
         if (initialCheck) {

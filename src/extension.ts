@@ -33,7 +33,7 @@ export function activate(context: vscode.ExtensionContext): void {
  */
 function setupLanguageConfiguration(): void {
     vscode.languages.setLanguageConfiguration('quarkdown', {
-        wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g
+        wordPattern: /(-?\d*\.\d\w*)|([^`~!@#%^&*()\-=+[{\]}\\|;:'",.<>/?\s]+)/g,
     });
 }
 
@@ -54,9 +54,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
                     return newClient;
                 },
                 () => client,
-                (newClient) => { client = newClient; }
+                (newClient) => {
+                    client = newClient;
+                }
             );
-        })
+        }),
     ];
 
     context.subscriptions.push(...commands);
@@ -72,10 +74,10 @@ function registerWebviewSerializer(context: vscode.ExtensionContext): void {
             async deserializeWebviewPanel(panel: vscode.WebviewPanel): Promise<void> {
                 try {
                     panel.dispose();
-                } catch (error) {
+                } catch (_error) {
                     // Ignore disposal errors
                 }
-            }
+            },
         })
     );
 }
@@ -86,7 +88,7 @@ function registerWebviewSerializer(context: vscode.ExtensionContext): void {
  */
 function registerDocumentCloseHandler(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
-        vscode.workspace.onDidCloseTextDocument(document => {
+        vscode.workspace.onDidCloseTextDocument((document) => {
             const manager = QuarkdownPreviewManager.getInstance();
             if (document.fileName === manager.getCurrentPreviewFile()) {
                 void manager.stopPreview();
@@ -110,4 +112,3 @@ export async function deactivate(): Promise<void> {
         await client.stop();
     }
 }
-

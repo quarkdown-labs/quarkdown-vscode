@@ -20,7 +20,7 @@ export class QuarkdownCommandBuilder {
     /**
      * Build a basic Quarkdown command with the given executable path and arguments.
      * Handles platform-specific differences (Windows .cmd wrapper).
-     * 
+     *
      * @param executablePath Path to the Quarkdown executable
      * @param additionalArgs Additional command line arguments
      * @returns Command configuration ready for process execution
@@ -31,19 +31,19 @@ export class QuarkdownCommandBuilder {
             const launcher = path.extname(executablePath) ? executablePath : `${executablePath}`;
             return {
                 command: 'cmd',
-                args: ['/c', launcher, ...additionalArgs]
+                args: ['/c', launcher, ...additionalArgs],
             };
         }
 
         return {
             command: executablePath,
-            args: additionalArgs
+            args: additionalArgs,
         };
     }
 
     /**
      * Build a command for compiling Quarkdown files with standard options.
-     * 
+     *
      * @param executablePath Path to the Quarkdown executable
      * @param filePath Path to the source .qd file
      * @param outputDir Output directory for compilation artifacts
@@ -57,21 +57,24 @@ export class QuarkdownCommandBuilder {
         additionalArgs: string[] = []
     ): QuarkdownCommand {
         const baseCommand = this.buildCommand(executablePath, [
-            'c', path.basename(filePath),
-            '--out', outputDir,
+            'c',
+            path.basename(filePath),
+            '--out',
+            outputDir,
             ...additionalArgs,
-            '--browser', 'none',
+            '--browser',
+            'none',
         ]);
 
         return {
             ...baseCommand,
-            cwd: path.dirname(filePath)
+            cwd: path.dirname(filePath),
         };
     }
 
     /**
      * Build a command for starting the language server.
-     * 
+     *
      * @param executablePath Path to the Quarkdown executable
      * @returns Command configuration for the language server
      */
@@ -81,23 +84,19 @@ export class QuarkdownCommandBuilder {
 
     /**
      * Build a command for PDF export.
-     * 
+     *
      * @param executablePath Path to the Quarkdown executable
      * @param filePath Path to the source .qd file
      * @param outputDir Output directory for the PDF
      * @returns Complete command configuration for PDF export
      */
-    public static buildPdfExportCommand(
-        executablePath: string,
-        filePath: string,
-        outputDir: string
-    ): QuarkdownCommand {
+    public static buildPdfExportCommand(executablePath: string, filePath: string, outputDir: string): QuarkdownCommand {
         return this.buildCompileCommand(executablePath, filePath, outputDir, ['--pdf']);
     }
 
     /**
      * Build a command for live preview with server.
-     * 
+     *
      * @param executablePath Path to the Quarkdown executable
      * @param filePath Path to the source .qd file
      * @param outputDir Output directory for preview artifacts
@@ -113,9 +112,11 @@ export class QuarkdownCommandBuilder {
         additionalArgs: string[] = []
     ): QuarkdownCommand {
         return this.buildCompileCommand(executablePath, filePath, outputDir, [
-            '--preview', '--watch',
-            '--server-port', port.toString(),
-            ...additionalArgs
+            '--preview',
+            '--watch',
+            '--server-port',
+            port.toString(),
+            ...additionalArgs,
         ]);
     }
 }

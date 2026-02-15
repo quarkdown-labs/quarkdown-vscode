@@ -28,7 +28,7 @@ export async function exportToPDF(): Promise<void> {
         executablePath: config.executablePath,
         filePath: document.fileName,
         outputDirectory: config.outputDirectory,
-        logger: logger
+        logger: logger,
     };
 
     const exportService = new PdfExportService();
@@ -44,7 +44,7 @@ export async function exportToPDF(): Promise<void> {
         onError: (error) => {
             vscode.window.showErrorMessage(error);
             logger.dispose();
-        }
+        },
         // onProgress events are automatically logged by the service
     };
 

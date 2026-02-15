@@ -22,5 +22,5 @@ export const Strings = {
     exportInProgress: 'Exporting to PDF…',
     exportFailed: 'PDF export failed',
     exportSucceeded: 'PDF exported successfully.',
-    exportPdfNotFound: 'Output PDF was not created'
+    exportPdfNotFound: 'Output PDF was not created',
 } as const;

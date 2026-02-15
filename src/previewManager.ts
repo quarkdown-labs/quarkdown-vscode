@@ -7,7 +7,7 @@ import { Strings } from './strings';
 /**
  * Orchestrates the preview functionality by coordinating the server and webview.
  * Singleton ensures only one preview session at a time.
- * 
+ *
  * This class acts as the coordinator between the Quarkdown server and the VS Code webview,
  * handling the lifecycle and communication between both components.
  */
@@ -44,7 +44,7 @@ export class QuarkdownPreviewManager {
             },
             onExit: () => {
                 this.cleanup();
-            }
+            },
         };
         this.server.setEventHandlers(serverEvents);
 
@@ -54,14 +54,14 @@ export class QuarkdownPreviewManager {
                 if (this.server.isRunning()) {
                     void this.stopPreview();
                 }
-            }
+            },
         };
         this.webview.setEventHandlers(webviewEvents);
     }
 
-    /** 
+    /**
      * Start (or restart) the preview for a file.
-     * 
+     *
      * @param filePath Path to the .qd file to preview
      */
     public async startPreview(filePath: string): Promise<void> {
@@ -88,7 +88,7 @@ export class QuarkdownPreviewManager {
         await this.server.start(filePath);
     }
 
-    /** 
+    /**
      * Stop the preview process and cleanup resources.
      */
     public async stopPreview(): Promise<void> {
@@ -122,14 +122,13 @@ export class QuarkdownPreviewManager {
      * Show installation error with helpful guidance.
      */
     private showInstallError(): void {
-        vscode.window.showErrorMessage(
-            Strings.previewInstallErrorTitle,
-            Strings.previewInstallGuide
-        ).then(selection => {
-            if (selection === Strings.previewInstallGuide) {
-                void vscode.env.openExternal(vscode.Uri.parse('https://github.com/iamgio/quarkdown'));
-            }
-        });
+        vscode.window
+            .showErrorMessage(Strings.previewInstallErrorTitle, Strings.previewInstallGuide)
+            .then((selection) => {
+                if (selection === Strings.previewInstallGuide) {
+                    void vscode.env.openExternal(vscode.Uri.parse('https://github.com/iamgio/quarkdown'));
+                }
+            });
     }
 
     /**

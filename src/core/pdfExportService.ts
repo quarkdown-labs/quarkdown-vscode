@@ -43,7 +43,7 @@ export class PdfExportService {
 
     /**
      * Export a Quarkdown file to PDF.
-     * 
+     *
      * @param config Export configuration
      * @param events Event handlers for progress tracking
      * @returns Promise that resolves when export completes
@@ -76,9 +76,10 @@ export class PdfExportService {
                     events?.onProgress?.(data);
                 },
                 onError: (error) => {
-                    const errorMessage = error.code === 'ENOENT'
-                        ? 'Quarkdown not found. Please install Quarkdown first.'
-                        : error.message;
+                    const errorMessage =
+                        error.code === 'ENOENT'
+                            ? 'Quarkdown not found. Please install Quarkdown first.'
+                            : error.message;
                     logger.error(`Process error: ${errorMessage}`);
                     events?.onError?.(errorMessage);
                 },
@@ -98,15 +99,15 @@ export class PdfExportService {
                         logger.info('PDF export completed successfully');
                         events?.onSuccess?.();
                     }
-                }
-            }
+                },
+            },
         };
 
         try {
             await this.processManager.start(processConfig);
 
             // Wait for process to complete
-            return new Promise<void>((resolve, reject) => {
+            return new Promise<void>((resolve, _reject) => {
                 const checkComplete = () => {
                     if (!this.processManager.isRunning()) {
                         resolve();
@@ -116,7 +117,6 @@ export class PdfExportService {
                 };
                 checkComplete();
             });
-
         } catch (error) {
             logger.error(`Failed to start PDF export: ${error}`);
             events?.onError?.(`Failed to start PDF export: ${error}`);

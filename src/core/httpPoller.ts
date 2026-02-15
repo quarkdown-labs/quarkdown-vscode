@@ -21,17 +21,12 @@ export interface HttpPollerConfig {
 export class HttpPoller {
     /**
      * Poll a URL until it responds successfully or times out.
-     * 
+     *
      * @param config Polling configuration
      * @returns Promise that resolves to true if server responds, false if timeout
      */
     public static async pollUntilReady(config: HttpPollerConfig): Promise<boolean> {
-        const {
-            url,
-            timeout = 200,
-            maxAttempts = 20,
-            delayMs = 300
-        } = config;
+        const { url, timeout = 200, maxAttempts = 20, delayMs = 300 } = config;
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             const success = await this.checkOnce(url, timeout);
@@ -49,7 +44,7 @@ export class HttpPoller {
 
     /**
      * Check if a URL responds successfully once.
-     * 
+     *
      * @param url URL to check
      * @param timeout Request timeout in milliseconds
      * @returns Promise that resolves to true if successful, false otherwise
@@ -74,10 +69,10 @@ export class HttpPoller {
 
     /**
      * Simple promise-based delay utility.
-     * 
+     *
      * @param ms Milliseconds to delay
      */
     private static delay(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }

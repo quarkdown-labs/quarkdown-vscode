@@ -11,7 +11,7 @@ export interface WebviewEvents {
 
 /**
  * Manages the preview webview panel and its content.
- * 
+ *
  * This class encapsulates all webview-related functionality including:
  * - Creating and managing the webview panel
  * - Loading preview content from URLs
@@ -30,17 +30,17 @@ export class PreviewWebview {
         this.events = events;
     }
 
-    /** 
+    /**
      * Set the allowed origins for the webview Content Security Policy.
      * This is important for security when loading external content.
-     * 
+     *
      * @param origins Array of allowed origin URLs
      */
     public setAllowedOrigins(origins: string[]): void {
         this.allowedOrigins = origins.join(' ');
     }
 
-    /** 
+    /**
      * Create and show the webview with a loading screen.
      * If webview already exists, it will be revealed and updated.
      */
@@ -70,9 +70,9 @@ export class PreviewWebview {
         });
     }
 
-    /** 
+    /**
      * Update the webview to show the preview content from the given URL.
-     * 
+     *
      * @param url URL of the preview server to load
      */
     public loadPreview(url: string): void {
@@ -88,13 +88,13 @@ export class PreviewWebview {
             setTimeout(() => {
                 this.webviewPanel?.webview.postMessage({
                     command: 'setSrc',
-                    url
+                    url,
                 });
             }, 0);
         }
     }
 
-    /** 
+    /**
      * Set the webview title to indicate waiting state.
      * Used during server startup when the preview is not yet ready.
      */
@@ -104,14 +104,14 @@ export class PreviewWebview {
         }
     }
 
-    /** 
+    /**
      * Dispose the webview panel and clean up resources.
      */
     public dispose(): void {
         if (this.webviewPanel) {
             try {
                 this.webviewPanel.dispose();
-            } catch (error) {
+            } catch (_error) {
                 // Ignore disposal errors - panel might already be disposed
             }
             this.webviewPanel = undefined;
@@ -125,14 +125,14 @@ export class PreviewWebview {
         return !!this.webviewPanel;
     }
 
-    /** 
+    /**
      * Load HTML template and inject CSP + localized strings.
-     * 
+     *
      * @returns HTML content for the webview with injected values
      */
     private getWebviewHtml(): string {
         // Find the extension to get the correct path to assets
-        const containingExt = vscode.extensions.all.find(e => __dirname.startsWith(e.extensionUri.fsPath));
+        const containingExt = vscode.extensions.all.find((e) => __dirname.startsWith(e.extensionUri.fsPath));
 
         const baseUri = containingExt?.extensionUri ?? vscode.Uri.file(path.dirname(__dirname));
         const htmlPath = vscode.Uri.joinPath(baseUri, 'assets', 'preview.html');

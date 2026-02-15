@@ -6,7 +6,7 @@ const CONFIG_ROOT = 'quarkdown';
 /** Configuration keys under the quarkdown root. */
 const CONFIG_KEYS = {
     executablePath: 'path',
-    outputDirectory: 'outputDirectory'
+    outputDirectory: 'outputDirectory',
 } as const;
 
 /**
@@ -27,11 +27,7 @@ export interface QuarkdownConfig {
  * @param validate Optional validation function to check the retrieved value.
  * @returns The configuration value, or the default if not set or invalid.
  */
-function getConfigValue<T>(
-    key: string,
-    defaultValue: T,
-    validate: (value: T) => boolean = () => true
-): T {
+function getConfigValue<T>(key: string, defaultValue: T, validate: (value: T) => boolean = () => true): T {
     const config = vscode.workspace.getConfiguration(CONFIG_ROOT);
     const value = config.get<T>(key, defaultValue);
     if (validate(value)) {
@@ -51,8 +47,7 @@ const isNonEmptyString = (value: string): boolean => value.length > 0;
  * Get the configured path to the Quarkdown executable.
  * Defaults to 'quarkdown' if not configured.
  */
-export const getExecutablePath = (): string =>
-    getConfigValue<string>(CONFIG_KEYS.executablePath, 'quarkdown');
+export const getExecutablePath = (): string => getConfigValue<string>(CONFIG_KEYS.executablePath, 'quarkdown');
 
 /**
  * Get the configured output directory for Quarkdown artifacts.
@@ -67,5 +62,5 @@ export const getOutputDirectory = (): string =>
  */
 export const getQuarkdownConfig = (): QuarkdownConfig => ({
     executablePath: getExecutablePath(),
-    outputDirectory: getOutputDirectory()
+    outputDirectory: getOutputDirectory(),
 });

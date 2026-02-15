@@ -36,7 +36,7 @@ export class ProcessManager {
     /**
      * Start a new process with the given configuration.
      * If a process is already running, it will be stopped first.
-     * 
+     *
      * @param config Process configuration including command, args, and event handlers
      */
     public async start(config: ProcessConfig): Promise<void> {
@@ -70,7 +70,6 @@ export class ProcessManager {
                 this.process = undefined;
                 this.isTerminating = false;
             });
-
         } catch (error) {
             this.process = undefined;
             throw error;
