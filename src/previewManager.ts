@@ -34,7 +34,7 @@ export class QuarkdownPreviewManager {
         // Server event handlers
         const serverEvents: ServerEvents = {
             onReady: (url: string) => {
-                this.webview.loadPreview(url);
+                void this.webview.loadPreview(url);
             },
             onError: (error: string) => {
                 vscode.window.showErrorMessage(`Preview Error: ${error}`);
@@ -81,7 +81,7 @@ export class QuarkdownPreviewManager {
         ]);
 
         // Show webview with loading screen immediately for better UX
-        this.webview.show();
+        await this.webview.show();
         vscode.window.showInformationMessage(Strings.previewStartingInfo);
 
         // Start the server (this will trigger webview update when ready)
@@ -135,8 +135,8 @@ export class QuarkdownPreviewManager {
      * Dispose of all resources when the extension is deactivated.
      * Should be called during extension deactivation.
      */
-    public dispose(): void {
-        void this.stopPreview();
+    public async dispose(): Promise<void> {
+        await this.stopPreview();
         this.server.dispose();
     }
 }
