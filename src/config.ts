@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 /** Quarkdown configuration section name in settings.json */
@@ -50,11 +51,23 @@ const isNonEmptyString = (value: string): boolean => value.length > 0;
 export const getExecutablePath = (): string => getConfigValue<string>(CONFIG_KEYS.executablePath, 'quarkdown');
 
 /**
- * Get the configured output directory for Quarkdown artifacts.
+ * Get the configured output directory for Quarkdown artifacts,
+ * resolved as an absolute path against the workspace root.
+ * If the configured value is already absolute or no workspace is open,
+ * it is returned as-is.
  * Defaults to 'output' if not configured or if empty.
  */
-export const getOutputDirectory = (): string =>
-    getConfigValue<string>(CONFIG_KEYS.outputDirectory, 'output', isNonEmptyString);
+export const getOutputDirectory = (): string => {
+    const outputDir = getConfigValue<string>(CONFIG_KEYS.outputDirectory, 'output', isNonEmptyString);
+    if (path.isAbsolute(outputDir)) {
+        return outputDir;
+    }
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspaceRoot) {
+        return outputDir;
+    }
+    return path.resolve(workspaceRoot, outputDir);
+};
 
 /**
  * Get all Quarkdown configuration as a typed object.
