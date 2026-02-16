@@ -64,7 +64,8 @@ describe.skipIf(!QUARKDOWN_PATH)('PdfExportService (integration)', () => {
         });
 
         const files = fs.readdirSync(tmpDir);
-        expect(files.length).toBeGreaterThan(0);
+        expect(files).toHaveLength(1);
+        expect(files[0]).toMatch(/\.pdf$/);
     });
 
     it('onProgress receives data during export', async () => {
