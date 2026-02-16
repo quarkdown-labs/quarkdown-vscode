@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { PdfExportService, PdfExportConfig, PdfExportEvents } from './core/pdfExportService';
 import { VSCodeLogger } from './vscode/vscodeLogger';
 import { getQuarkdownConfig } from './config';
-import { getActiveQuarkdownDocument } from './utils';
+import { getActiveQuarkdownDocument } from './vscode/utils';
 import { Strings } from './strings';
 
 /**
