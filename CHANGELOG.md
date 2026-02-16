@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 - Fixed Quarkdown processes sometimes remaining alive after closing VS Code.
-- Fixed preview startup hanging indefinitely when the server fails to start — now shows an error after ~2 minutes.
+- Fixed preview startup hanging indefinitely when the server fails to start.
 - Improved PDF export reliability and reduced CPU usage during export.
 - Improved security of process spawning and preview URL handling.
 
