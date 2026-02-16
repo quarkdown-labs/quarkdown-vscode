@@ -23,4 +23,5 @@ export const Strings = {
     exportFailed: 'PDF export failed',
     exportSucceeded: 'PDF exported successfully.',
     exportPdfNotFound: 'Output PDF was not created',
+    openPdf: 'Open PDF',
 } as const;

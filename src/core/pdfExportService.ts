@@ -1,6 +1,7 @@
-import { ProcessManager, ProcessConfig } from '../core/processManager';
-import { QuarkdownCommandBuilder } from '../core/commandBuilder';
-import { Logger, NoOpLogger } from '../core/logger';
+import { ProcessManager, ProcessConfig } from './processManager';
+import { QuarkdownCommandBuilder } from './commandBuilder';
+import { Logger, NoOpLogger } from './logger';
+import { getPathFromPdfExportOutput } from './utils';
 
 /**
  * Configuration for PDF export operation.
@@ -23,7 +24,7 @@ export interface PdfExportEvents {
     /** Called when the export process outputs to stdout */
     onProgress?: (data: string) => void;
     /** Called when the export succeeds */
-    onSuccess?: () => void;
+    onSuccess?: (exportInfo?: undefined | [string, 'file' | 'folder']) => void;
     /** Called when the export fails */
     onError?: (error: string) => void;
 }
@@ -35,6 +36,7 @@ export interface PdfExportEvents {
 export class PdfExportService {
     private readonly processManager: ProcessManager;
     private readonly logger: Logger;
+    private lastStdoutData: string | undefined = undefined;
 
     constructor() {
         this.processManager = new ProcessManager();
@@ -50,6 +52,7 @@ export class PdfExportService {
      */
     public async exportToPdf(config: PdfExportConfig, events?: PdfExportEvents): Promise<void> {
         const logger = config.logger || this.logger;
+        this.lastStdoutData = undefined;
 
         const command = QuarkdownCommandBuilder.buildPdfExportCommand(
             config.executablePath,
@@ -69,6 +72,7 @@ export class PdfExportService {
                 onStdout: (data) => {
                     logger.info(data.trim());
                     events?.onProgress?.(data);
+                    this.lastStdoutData = data;
                 },
                 onStderr: (data) => {
                     stderrBuffer += data;
@@ -97,7 +101,19 @@ export class PdfExportService {
                         events?.onError?.(errorMessage);
                     } else {
                         logger.info('PDF export completed successfully');
-                        events?.onSuccess?.();
+                        const exportInfo = () => {
+                            if (!this.lastStdoutData) {
+                                logger.warn('No stdout data to parse for export path');
+                                return undefined;
+                            }
+                            const path = getPathFromPdfExportOutput(this.lastStdoutData);
+                            if (!path) {
+                                logger.warn('Failed to extract export path from stdout data');
+                                return undefined;
+                            }
+                            return path;
+                        };
+                        events?.onSuccess?.(exportInfo());
                     }
                 },
             },
