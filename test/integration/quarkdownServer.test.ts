@@ -14,6 +14,8 @@ const QUARKDOWN_PATH = process.env.QUARKDOWN_PATH;
 describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
     let server: QuarkdownServer;
     let tmpDir: string;
+    /** Extra temp directories created by individual tests, cleaned up after server stops. */
+    const extraDirs: string[] = [];
 
     beforeAll(() => {
         tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qd-test-'));
@@ -25,6 +27,11 @@ describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
         for (const entry of fs.readdirSync(tmpDir)) {
             fs.rmSync(path.join(tmpDir, entry), { recursive: true, force: true });
         }
+        // Clean up extra dirs after server has released file handles
+        for (const dir of extraDirs) {
+            fs.rmSync(dir, { recursive: true, force: true });
+        }
+        extraDirs.length = 0;
     });
 
     const fixturePath = path.resolve(__dirname, '../../test/fixtures/sample.qd');
@@ -142,6 +149,7 @@ describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
         // Use a separate directory for the source file so the output watcher
         // doesn't interfere with change detection.
         const srcDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qd-src-'));
+        extraDirs.push(srcDir);
         const srcFile = path.join(srcDir, 'source.qd');
         fs.copyFileSync(fixturePath, srcFile);
 
@@ -161,12 +169,13 @@ describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
         // Wait for the watcher to pick up the change and recompile
         const changed = await pollUntilChanged(indexPath!, originalContent, 30_000);
         expect(changed, 'index.html should have changed after modifying the source').toBe(true);
-
-        fs.rmSync(srcDir, { recursive: true, force: true });
     });
 
     it('fires error for invalid executable', async () => {
-        const errorMsg = await new Promise<string>((resolve) => {
+        // On Unix, a nonexistent command triggers an ENOENT error event.
+        // On Windows, `cmd /c nonexistent` spawns successfully but exits
+        // with a non-zero code, so we accept either onError or onExit.
+        const result = await new Promise<string>((resolve) => {
             server = new QuarkdownServer({
                 executablePath: '/nonexistent/quarkdown',
                 filePath: fixturePath,
@@ -175,11 +184,12 @@ describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
 
             server.setEventHandlers({
                 onError: (err) => resolve(err),
+                onExit: (code) => resolve(`exited with code ${code}`),
             });
 
             void server.start();
         });
 
-        expect(errorMsg.length).toBeGreaterThan(0);
+        expect(result.length).toBeGreaterThan(0);
     });
 });
