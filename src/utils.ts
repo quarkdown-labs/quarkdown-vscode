@@ -65,3 +65,11 @@ export function getActiveQuarkdownDocument(): vscode.TextDocument | undefined {
     }
     return editor.document;
 }
+
+export function getPathFromPdfExportOutput(output: string): string | undefined {
+    const match = output.match(/Success.*@ (.+\.pdf)/);
+    if (match && match[1]) {
+        return match[1].trim();
+    }
+    return undefined;
+}
