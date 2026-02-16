@@ -1,27 +1,7 @@
 import * as assert from 'assert';
-import { isQuarkdownFile, getActiveQuarkdownDocument } from '../../src/utils';
+import { getActiveQuarkdownDocument } from '../../src/vscode/utils';
 
-suite('Utils', () => {
-    test('isQuarkdownFile: true for .qd extension', () => {
-        assert.strictEqual(isQuarkdownFile('document.qd'), true);
-    });
-
-    test('isQuarkdownFile: true for paths with .qd', () => {
-        assert.strictEqual(isQuarkdownFile('/home/user/project/main.qd'), true);
-    });
-
-    test('isQuarkdownFile: false for .md extension', () => {
-        assert.strictEqual(isQuarkdownFile('readme.md'), false);
-    });
-
-    test('isQuarkdownFile: false for empty string', () => {
-        assert.strictEqual(isQuarkdownFile(''), false);
-    });
-
-    test('isQuarkdownFile: false for undefined', () => {
-        assert.strictEqual(isQuarkdownFile(undefined), false);
-    });
-
+suite('VS Code Utils', () => {
     test('getActiveQuarkdownDocument: undefined with no active editor', () => {
         const doc = getActiveQuarkdownDocument();
         assert.strictEqual(doc, undefined);

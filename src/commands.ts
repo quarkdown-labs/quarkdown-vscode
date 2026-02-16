@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { QuarkdownPreviewManager } from './previewManager';
 import { exportToPDF } from './pdfExport';
-import { getActiveQuarkdownDocument } from './utils';
+import { getActiveQuarkdownDocument } from './vscode/utils';
 import { Strings } from './strings';
 
 /**
