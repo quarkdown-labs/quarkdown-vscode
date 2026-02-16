@@ -1,7 +1,7 @@
 import { ProcessManager, ProcessConfig } from '../core/processManager';
 import { QuarkdownCommandBuilder } from '../core/commandBuilder';
 import { Logger, NoOpLogger } from '../core/logger';
-import { getPathFromPdfExportOutput } from '../utils';
+import { getPathFromPdfExportOutput } from './utils';
 
 /**
  * Configuration for PDF export operation.
