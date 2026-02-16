@@ -1,6 +1,6 @@
-import { ProcessManager, ProcessConfig } from '../core/processManager';
-import { QuarkdownCommandBuilder } from '../core/commandBuilder';
-import { Logger, NoOpLogger } from '../core/logger';
+import { ProcessManager, ProcessConfig } from './processManager';
+import { QuarkdownCommandBuilder } from './commandBuilder';
+import { Logger, NoOpLogger } from './logger';
 import { getPathFromPdfExportOutput } from './utils';
 
 /**
