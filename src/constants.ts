@@ -3,6 +3,7 @@ export const DEFAULT_PREVIEW_PORT = 8099;
 export const OUTPUT_CHANNELS = {
     preview: 'Quarkdown Preview',
     languageServer: 'Quarkdown Language Server',
+    pdfExport: 'Quarkdown PDF Export',
 } as const;
 
 /** File extension (including dot) for Quarkdown source files. */

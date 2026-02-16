@@ -3,6 +3,7 @@ import { PdfExportService, PdfExportConfig, PdfExportEvents } from './core/pdfEx
 import { VSCodeLogger } from './vscode/vscodeLogger';
 import { getQuarkdownConfig } from './config';
 import { Strings } from './strings';
+import { OUTPUT_CHANNELS } from './constants';
 
 /**
  * Orchestrates PDF export functionality by coordinating with the Quarkdown CLI.
@@ -17,7 +18,7 @@ export class QuarkdownPdfExporter {
 
     private constructor() {
         this.exportService = new PdfExportService();
-        this.logger = new VSCodeLogger('Quarkdown PDF Export');
+        this.logger = new VSCodeLogger(OUTPUT_CHANNELS.pdfExport);
     }
 
     public static getInstance(): QuarkdownPdfExporter {
