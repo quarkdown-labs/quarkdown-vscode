@@ -13,6 +13,8 @@ jobs:
     name: Publish to Marketplace
     needs: ci
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -24,16 +26,30 @@ jobs:
 
       - run: yarn install --frozen-lockfile
 
+      - name: Extract release notes
+        id: release-notes
+        uses: ffurrer2/extract-release-notes@v2
+
+      - name: Update changelog
+        uses: thomaseizinger/keep-a-changelog-new-release@v2
+        with:
+          tag: ${{ github.ref_name }}
+
       - uses: lannonbr/vsce-action@4.0.0
         with:
           args: "publish ${GITHUB_REF_NAME#v} -p $VSCE_TOKEN"
         env:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
 
-      - name: Push version bump to main
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "${{ github.ref_name }}" --notes '${{ steps.release-notes.outputs.release_notes }}'
+
+      - name: Push changelog and version bump to main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json
-          git commit -m "chore: bump version to ${GITHUB_REF_NAME#v}"
+          git add package.json CHANGELOG.md
+          git commit -m "chore: release ${GITHUB_REF_NAME#v}"
           git push origin HEAD:main
