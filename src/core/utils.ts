@@ -15,11 +15,11 @@ export function getPathFromPdfExportOutput(output: string): [string, 'file' | 'f
     if (pdfMatch && pdfMatch[1]) {
         return [pdfMatch[1].trim(), 'file'];
     }
-    
+
     const folderMatch = output.match(/Success.*@ (.+?)(?:\s|$)/);
     if (folderMatch && folderMatch[1]) {
         return [folderMatch[1].trim(), 'folder'];
     }
-    
+
     return undefined;
 }
