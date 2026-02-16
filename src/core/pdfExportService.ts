@@ -112,7 +112,7 @@ export class PdfExportService {
                                 return undefined;
                             }
                             return path;
-                        }
+                        };
                         events?.onSuccess?.(pdfPath());
                     }
                 },
