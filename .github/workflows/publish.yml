@@ -33,7 +33,7 @@ jobs:
 
       - name: Extract release notes
         id: release-notes
-        uses: ffurrer2/extract-release-notes@v2
+        uses: ffurrer2/extract-release-notes@v3
 
       - uses: lannonbr/vsce-action@4.0.0
         with:
