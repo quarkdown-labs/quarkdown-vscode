@@ -24,7 +24,7 @@ export interface PdfExportEvents {
     /** Called when the export process outputs to stdout */
     onProgress?: (data: string) => void;
     /** Called when the export succeeds */
-    onSuccess?: (pdfPath?: string) => void;
+    onSuccess?: (exportInfo?: undefined | [string, 'file' | 'folder']) => void;
     /** Called when the export fails */
     onError?: (error: string) => void;
 }
@@ -101,19 +101,19 @@ export class PdfExportService {
                         events?.onError?.(errorMessage);
                     } else {
                         logger.info('PDF export completed successfully');
-                        const pdfPath = () => {
+                        const exportInfo = () => {
                             if (!this.lastStdoutData) {
-                                logger.warn('No stdout data to parse for PDF path');
+                                logger.warn('No stdout data to parse for export path');
                                 return undefined;
                             }
                             const path = getPathFromPdfExportOutput(this.lastStdoutData);
                             if (!path) {
-                                logger.warn('Failed to extract PDF path from stdout data');
+                                logger.warn('Failed to extract export path from stdout data');
                                 return undefined;
                             }
                             return path;
                         };
-                        events?.onSuccess?.(pdfPath());
+                        events?.onSuccess?.(exportInfo());
                     }
                 },
             },

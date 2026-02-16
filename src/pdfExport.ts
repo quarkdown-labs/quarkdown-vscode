@@ -37,11 +37,17 @@ export async function exportToPDF(): Promise<void> {
     vscode.window.showInformationMessage(Strings.exportInProgress);
 
     const events: PdfExportEvents = {
-        onSuccess: (pdfPath) => {
-            const items = pdfPath ? [Strings.openPdf] : [];
+        onSuccess: (exportInfo) => {
+            const items = exportInfo ? [Strings.openPdf] : [];
             vscode.window.showInformationMessage(Strings.exportSucceeded, ...items).then((selection) => {
-                if (selection === Strings.openPdf && pdfPath) {
-                    vscode.env.openExternal(vscode.Uri.file(pdfPath));
+                if (selection === Strings.openPdf && exportInfo) {
+                    const [exportPath, pathType] = exportInfo;
+                    const uri = vscode.Uri.file(exportPath);
+                    if (pathType === 'file') {
+                        vscode.env.openExternal(uri);
+                    } else if (pathType === 'folder') {
+                        vscode.commands.executeCommand('revealFileInOS', uri);
+                    }
                 }
             });
             logger.dispose();

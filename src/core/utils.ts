@@ -10,10 +10,16 @@ export function isQuarkdownFile(fileName: string | undefined): boolean {
     return !!fileName && fileName.toLowerCase().endsWith(QUARKDOWN_EXTENSION);
 }
 
-export function getPathFromPdfExportOutput(output: string): string | undefined {
-    const match = output.match(/Success.*@ (.+\.pdf)/);
-    if (match && match[1]) {
-        return match[1].trim();
+export function getPathFromPdfExportOutput(output: string): [string, 'file' | 'folder'] | undefined {
+    const pdfMatch = output.match(/Success.*@ (.+\.pdf)/);
+    if (pdfMatch && pdfMatch[1]) {
+        return [pdfMatch[1].trim(), 'file'];
     }
+    
+    const folderMatch = output.match(/Success.*@ (.+?)(?:\s|$)/);
+    if (folderMatch && folderMatch[1]) {
+        return [folderMatch[1].trim(), 'folder'];
+    }
+    
     return undefined;
 }

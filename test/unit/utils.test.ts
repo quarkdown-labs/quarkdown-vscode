@@ -25,13 +25,19 @@ suite('Utils', () => {
     test('getPathFromPdfExportOutput: extracts path from success message', () => {
         const output = 'Success: @ /home/user/document.pdf';
         const path = getPathFromPdfExportOutput(output);
-        assert.strictEqual(path, '/home/user/document.pdf');
+        assert.deepEqual(path, ['/home/user/document.pdf', 'file']);
+    });
+
+    test('getPathFromPdfExportOutput: extracts path (folder) from success message', () => {
+        const output = 'Success: @ /home/user/output';
+        const path = getPathFromPdfExportOutput(output);
+        assert.deepEqual(path, ['/home/user/output', 'folder']);
     });
 
     test('getPathFromPdfExportOutput: extracts path with ANSI color codes', () => {
         const output = '\u001b[37m[12:34]\u001b[m \u001b[32mSuccess\u001b[m @ /home/user/document.pdf';
         const path = getPathFromPdfExportOutput(output);
-        assert.strictEqual(path, '/home/user/document.pdf');
+        assert.deepEqual(path, ['/home/user/document.pdf', 'file']);
     });
 
     test('getPathFromPdfExportOutput: returns undefined if no match', () => {
