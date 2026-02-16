@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { isQuarkdownFile, getActiveQuarkdownDocument } from '../../src/utils';
+import { isQuarkdownFile, getActiveQuarkdownDocument, getPathFromPdfExportOutput } from '../../src/utils';
 
 suite('Utils', () => {
     test('isQuarkdownFile: true for .qd extension', () => {
@@ -25,5 +25,23 @@ suite('Utils', () => {
     test('getActiveQuarkdownDocument: undefined with no active editor', () => {
         const doc = getActiveQuarkdownDocument();
         assert.strictEqual(doc, undefined);
+    });
+
+    test('getPathFromPdfExportOutput: extracts path from success message', () => {
+        const output = 'Success: @ /home/user/document.pdf';
+        const path = getPathFromPdfExportOutput(output);
+        assert.strictEqual(path, '/home/user/document.pdf');
+    });
+
+    test('getPathFromPdfExportOutput: extracts path with ANSI color codes', () => {
+        const output = '\u001b[37m[12:34]\u001b[m \u001b[32mSuccess\u001b[m @ /home/user/document.pdf';
+        const path = getPathFromPdfExportOutput(output);
+        assert.strictEqual(path, '/home/user/document.pdf');
+    });
+
+    test('getPathFromPdfExportOutput: returns undefined if no match', () => {
+        const output = 'Another message without path';
+        const path = getPathFromPdfExportOutput(output);
+        assert.strictEqual(path, undefined);
     });
 });
