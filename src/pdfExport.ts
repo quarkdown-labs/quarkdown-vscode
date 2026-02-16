@@ -13,9 +13,11 @@ import { Strings } from './strings';
 export class QuarkdownPdfExporter {
     private static instance: QuarkdownPdfExporter;
     private exportService: PdfExportService;
+    private readonly logger: VSCodeLogger;
 
     private constructor() {
         this.exportService = new PdfExportService();
+        this.logger = new VSCodeLogger('Quarkdown PDF Export');
     }
 
     public static getInstance(): QuarkdownPdfExporter {
@@ -28,13 +30,12 @@ export class QuarkdownPdfExporter {
      */
     public async export(document: vscode.TextDocument): Promise<void> {
         const config = getQuarkdownConfig();
-        const logger = new VSCodeLogger('Quarkdown PDF Export');
 
         const exportConfig: PdfExportConfig = {
             executablePath: config.executablePath,
             filePath: document.fileName,
             outputDirectory: config.outputDirectory,
-            logger: logger,
+            logger: this.logger,
         };
 
         // Show initial progress message
@@ -43,11 +44,9 @@ export class QuarkdownPdfExporter {
         const events: PdfExportEvents = {
             onSuccess: () => {
                 vscode.window.showInformationMessage(Strings.exportSucceeded);
-                logger.dispose();
             },
             onError: (error) => {
                 vscode.window.showErrorMessage(error);
-                logger.dispose();
             },
             // onProgress events are automatically logged by the service
         };
@@ -57,8 +56,7 @@ export class QuarkdownPdfExporter {
         } catch (error) {
             const errorMessage = `Export failed: ${error}`;
             vscode.window.showErrorMessage(errorMessage);
-            logger.error(errorMessage);
-            logger.dispose();
+            this.logger.error(errorMessage);
         }
     }
 }
