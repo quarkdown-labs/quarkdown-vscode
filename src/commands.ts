@@ -58,10 +58,21 @@ export class QuarkdownCommands {
      * Delegates to the PDF export module.
      */
     public static async exportToPdf(): Promise<void> {
+        const document = getActiveQuarkdownDocument();
+        if (!document) {
+            vscode.window.showWarningMessage(Strings.openQuarkdownFirst);
+            return;
+        }
+
+        if (document.isDirty && !(await document.save())) {
+            vscode.window.showErrorMessage(Strings.saveBeforePreview);
+            return;
+        }
+
         const pdfExporter = QuarkdownPdfExporter.getInstance();
 
         try {
-            await pdfExporter.export();
+            await pdfExporter.export(document);
         } catch (error) {
             vscode.window.showErrorMessage(`PDF export failed: ${error}`);
         }

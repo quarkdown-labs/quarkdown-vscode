@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { PdfExportService, PdfExportConfig, PdfExportEvents } from './core/pdfExportService';
 import { VSCodeLogger } from './vscode/vscodeLogger';
 import { getQuarkdownConfig } from './config';
-import { getActiveQuarkdownDocument } from './utils';
 import { Strings } from './strings';
 
 /**
@@ -24,20 +23,10 @@ export class QuarkdownPdfExporter {
     }
 
     /**
-     * Initiates the PDF export process for the active Quarkdown document.
+     * Initiates the PDF export process for the given document.
+     * @param document The VS Code text document to export.
      */
-    public async export(): Promise<void> {
-        const document = getActiveQuarkdownDocument();
-        if (!document) {
-            vscode.window.showWarningMessage(Strings.openQuarkdownFirst);
-            return;
-        }
-
-        if (document.isDirty && !(await document.save())) {
-            vscode.window.showErrorMessage(Strings.saveBeforeExport);
-            return;
-        }
-
+    public async export(document: vscode.TextDocument): Promise<void> {
         const config = getQuarkdownConfig();
         const logger = new VSCodeLogger('Quarkdown PDF Export');
 
