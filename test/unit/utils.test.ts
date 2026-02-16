@@ -1,5 +1,5 @@
 import { suite, assert, test } from 'vitest';
-import { isQuarkdownFile } from '../../src/utils';
+import { isQuarkdownFile } from '../../src/core/utils';
 
 suite('Utils', () => {
     test('isQuarkdownFile: true for .qd extension', () => {

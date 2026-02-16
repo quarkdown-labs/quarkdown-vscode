@@ -1,4 +1,4 @@
-import { QUARKDOWN_EXTENSION } from './constants';
+import { QUARKDOWN_EXTENSION } from '../constants';
 
 /**
  * Determine whether the given file name appears to be a Quarkdown document.

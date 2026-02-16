@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as config from '../config';
 import { QuarkdownCommandBuilder } from '../core/commandBuilder';
-import { isQuarkdownFile } from '../utils';
+import { isQuarkdownFile } from '../core/utils';
 
 /**
  * Resolve the Quarkdown executable command + arguments, accounting for platform differences.
