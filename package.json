@@ -138,21 +138,32 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "build": "yarn compile && vsce package",
-    "lint": "eslint src/",
+    "lint": "eslint src/ test/",
     "format": "prettier --write src/",
     "format:check": "prettier --check src/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "vitest run test/integration",
+    "test:vscode": "vscode-test",
+    "pretest:vscode": "tsc -p tsconfig.test.json",
     "vscode:prepublish": "tsc -p ./"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.15.29",
     "@types/vscode": "^1.100.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.4.2",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
+    "mocha": "^11.7.5",
     "prettier": "^3.8.1",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.55.0"
+    "typescript-eslint": "^8.55.0",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

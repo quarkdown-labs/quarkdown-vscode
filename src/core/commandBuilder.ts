@@ -62,8 +62,6 @@ export class QuarkdownCommandBuilder {
             '--out',
             outputDir,
             ...additionalArgs,
-            '--browser',
-            'none',
         ]);
 
         return {
@@ -116,6 +114,8 @@ export class QuarkdownCommandBuilder {
             '--watch',
             '--server-port',
             port.toString(),
+            '--browser',
+            'none',
             ...additionalArgs,
         ]);
     }
