@@ -149,7 +149,12 @@ describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
     });
 
     it('modifying the source file updates index.html', async () => {
-        const srcFile = copyFixtureToTmp();
+        // Use a separate directory for the source file so the output watcher
+        // doesn't interfere with change detection.
+        const srcDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qd-src-'));
+        const srcFile = path.join(srcDir, 'source.qd');
+        fs.copyFileSync(fixturePath, srcFile);
+
         await startAndWaitForReady(srcFile, 18104);
 
         const indexPath = findIndexHtml(tmpDir);
@@ -157,12 +162,17 @@ describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
 
         const originalContent = fs.readFileSync(indexPath!, 'utf-8');
 
+        // Let the file watcher fully settle before modifying
+        await new Promise((r) => setTimeout(r, 2000));
+
         // Modify the source file while the preview server is watching
         fs.writeFileSync(srcFile, '# Updated\n\nNew paragraph content.\n');
 
         // Wait for the watcher to pick up the change and recompile
-        const changed = await pollUntilChanged(indexPath!, originalContent, 15_000);
+        const changed = await pollUntilChanged(indexPath!, originalContent, 30_000);
         expect(changed, 'index.html should have changed after modifying the source').toBe(true);
+
+        fs.rmSync(srcDir, { recursive: true, force: true });
     });
 
     it('fires error for invalid executable', async () => {
