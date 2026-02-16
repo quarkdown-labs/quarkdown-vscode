@@ -38,9 +38,9 @@ export async function exportToPDF(): Promise<void> {
 
     const events: PdfExportEvents = {
         onSuccess: (pdfPath) => {
-            const items = pdfPath ? [`Open PDF`] : [];
+            const items = pdfPath ? [Strings.openPdf] : [];
             vscode.window.showInformationMessage(Strings.exportSucceeded, ...items).then((selection) => {
-                if (selection === 'Open PDF' && pdfPath) {
+                if (selection === Strings.openPdf && pdfPath) {
                     vscode.env.openExternal(vscode.Uri.file(pdfPath));
                 }
             });
