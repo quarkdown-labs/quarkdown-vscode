@@ -11,3 +11,7 @@ webpack.config.js
 .github/**
 **/*.svg
 test_qd/**
+test/**
+vitest.config.ts
+tsconfig.test.json
+.vscode-test.mjs

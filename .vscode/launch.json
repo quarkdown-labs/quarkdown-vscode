@@ -9,6 +9,26 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			]
+		},
+		{
+			"name": "Debug Unit Tests",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+			"args": ["run", "test/unit"],
+			"console": "integratedTerminal",
+			"smartStep": true,
+			"skipFiles": ["<node_internals>/**"]
+		},
+		{
+			"name": "Debug VS Code Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"preLaunchTask": "prepare-compile",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/out/test/vscode"
+			]
 		}
 	]
 }

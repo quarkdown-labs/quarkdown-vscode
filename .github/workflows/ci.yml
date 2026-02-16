@@ -1,4 +1,4 @@
-name: CI
+name: Test
 
 on:
   push:
@@ -25,3 +25,26 @@ jobs:
       - run: yarn lint
       - run: yarn format:check
       - run: yarn compile
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - uses: quarkdown-labs/setup-quarkdown@v1
+        with:
+          quarkdown-version: devbuild
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn test:unit
+      - run: yarn test:integration
+        env:
+          QUARKDOWN_PATH: quarkdown

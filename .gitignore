@@ -2,7 +2,7 @@ node_modules
 *.vsix
 .env
 out/
-test/
+.vscode-test/
 package-lock.json
 .DS_Store
 output/
