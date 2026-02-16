@@ -30,16 +30,6 @@ describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
     const fixturePath = path.resolve(__dirname, '../../test/fixtures/sample.qd');
 
     /**
-     * Create a temporary copy of the fixture file so tests can modify it
-     * without affecting other tests or the original fixture.
-     */
-    function copyFixtureToTmp(): string {
-        const src = path.join(tmpDir, 'source.qd');
-        fs.copyFileSync(fixturePath, src);
-        return src;
-    }
-
-    /**
      * Poll a file until its content differs from the given value, or until timeout.
      */
     async function pollUntilChanged(filePath: string, previousContent: string, timeoutMs: number): Promise<boolean> {
@@ -155,46 +145,21 @@ describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
         const srcFile = path.join(srcDir, 'source.qd');
         fs.copyFileSync(fixturePath, srcFile);
 
-        console.log('[debug] srcDir:', srcDir);
-        console.log('[debug] srcFile:', srcFile);
-        console.log('[debug] outputDir (tmpDir):', tmpDir);
-
         await startAndWaitForReady(srcFile, 18104);
-        console.log('[debug] server ready, isRunning:', server.isRunning());
 
         const indexPath = findIndexHtml(tmpDir);
-        console.log('[debug] indexPath:', indexPath);
-        console.log('[debug] output contents:', JSON.stringify(fs.readdirSync(tmpDir, { recursive: true })));
         expect(indexPath, 'index.html should exist before modification').toBeDefined();
 
         const originalContent = fs.readFileSync(indexPath!, 'utf-8');
-        console.log('[debug] original index.html length:', originalContent.length);
-        console.log('[debug] original index.html snippet:', originalContent.slice(0, 200));
 
         // Let the file watcher fully settle before modifying
         await new Promise((r) => setTimeout(r, 2000));
-        console.log('[debug] watcher settle done, writing new content to source');
 
         // Modify the source file while the preview server is watching
         fs.writeFileSync(srcFile, '# Updated\n\nNew paragraph content.\n');
-        console.log('[debug] source file written, contents:', fs.readFileSync(srcFile, 'utf-8'));
-        console.log('[debug] server still running:', server.isRunning());
 
         // Wait for the watcher to pick up the change and recompile
         const changed = await pollUntilChanged(indexPath!, originalContent, 30_000);
-
-        if (!changed) {
-            const finalContent = fs.readFileSync(indexPath!, 'utf-8');
-            console.log('[debug] FAILED — index.html did NOT change');
-            console.log('[debug] final index.html length:', finalContent.length);
-            console.log('[debug] final index.html snippet:', finalContent.slice(0, 200));
-            console.log('[debug] content identical:', finalContent === originalContent);
-            console.log('[debug] server still running after poll:', server.isRunning());
-            console.log('[debug] output contents after poll:', JSON.stringify(fs.readdirSync(tmpDir, { recursive: true })));
-        } else {
-            console.log('[debug] OK — index.html changed');
-        }
-
         expect(changed, 'index.html should have changed after modifying the source').toBe(true);
 
         fs.rmSync(srcDir, { recursive: true, force: true });
