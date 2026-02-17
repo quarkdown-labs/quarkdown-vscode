@@ -30,11 +30,6 @@ export class QuarkdownPdfExporter {
      * @param document The VS Code text document to export.
      */
     public async export(document: vscode.TextDocument): Promise<void> {
-        if (this.exportService.isExporting()) {
-            vscode.window.showWarningMessage(Strings.exportAlreadyInProgress);
-            return;
-        }
-
         const config = getQuarkdownConfig();
 
         const exportConfig: PdfExportConfig = {
