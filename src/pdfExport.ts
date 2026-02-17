@@ -56,9 +56,11 @@ export class QuarkdownPdfExporter {
                         }
                     };
                 }
-                vscode.window.showInformationMessage(Strings.exportSucceeded, ...Object.keys(items)).then((selection) => {
-                    if (selection && selection in items) items[selection]();
-                });
+                vscode.window
+                    .showInformationMessage(Strings.exportSucceeded, ...Object.keys(items))
+                    .then((selection) => {
+                        if (selection && selection in items) items[selection]();
+                    });
             },
             onError: (error) => {
                 vscode.window.showErrorMessage(error);
