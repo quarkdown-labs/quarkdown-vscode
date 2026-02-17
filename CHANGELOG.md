@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Added an *Open PDF* button to the PDF export notification, to easily open the exported PDF file.
+
 ## [1.0.5] - 2026-02-16
 
 -   Fixed Quarkdown processes sometimes remaining alive after closing VS Code.
