@@ -2,72 +2,78 @@ import * as vscode from 'vscode';
 import { PdfExportService, PdfExportConfig, PdfExportEvents } from './core/pdfExportService';
 import { VSCodeLogger } from './vscode/vscodeLogger';
 import { getQuarkdownConfig } from './config';
-import { getActiveQuarkdownDocument } from './vscode/utils';
 import { Strings } from './strings';
+import { OUTPUT_CHANNELS } from './constants';
 
 /**
- * Export the active .qd file to PDF using VS Code integration.
- * Provides user feedback through VS Code's notification system.
+ * Orchestrates PDF export functionality by coordinating with the Quarkdown CLI.
+ *
+ * This class acts as the coordinator between the Quarkdown executable and VS Code,
+ * handling the export lifecycle and user feedback.
  */
-export async function exportToPDF(): Promise<void> {
-    const document = getActiveQuarkdownDocument();
-    if (!document) {
-        vscode.window.showWarningMessage(Strings.openQuarkdownFirst);
-        return;
+export class QuarkdownPdfExporter {
+    private static instance: QuarkdownPdfExporter;
+    private exportService: PdfExportService;
+    private readonly logger: VSCodeLogger;
+
+    private constructor() {
+        this.exportService = new PdfExportService();
+        this.logger = new VSCodeLogger(OUTPUT_CHANNELS.pdfExport);
     }
 
-    if (document.isDirty && !(await document.save())) {
-        vscode.window.showErrorMessage(Strings.saveBeforeExport);
-        return;
+    public static getInstance(): QuarkdownPdfExporter {
+        return this.instance || (this.instance = new QuarkdownPdfExporter());
     }
 
-    const config = getQuarkdownConfig();
-    const logger = new VSCodeLogger('Quarkdown PDF Export');
+    /**
+     * Initiates the PDF export process for the given document.
+     * @param document The VS Code text document to export.
+     */
+    public async export(document: vscode.TextDocument): Promise<void> {
+        const config = getQuarkdownConfig();
 
-    const exportConfig: PdfExportConfig = {
-        executablePath: config.executablePath,
-        filePath: document.fileName,
-        outputDirectory: config.outputDirectory,
-        logger: logger,
-    };
+        const exportConfig: PdfExportConfig = {
+            executablePath: config.executablePath,
+            filePath: document.fileName,
+            outputDirectory: config.outputDirectory,
+            logger: this.logger,
+        };
 
-    const exportService = new PdfExportService();
+        // Show initial progress message
+        vscode.window.showInformationMessage(Strings.exportInProgress);
 
-    // Show initial progress message
-    vscode.window.showInformationMessage(Strings.exportInProgress);
+        const events: PdfExportEvents = {
+            onSuccess: (exportInfo) => {
+                const items: Record<string, () => void> = {};
+                if (exportInfo) {
+                    const [exportPath, pathType] = exportInfo;
+                    items[Strings.openPdf] = () => {
+                        const uri = vscode.Uri.file(exportPath);
+                        if (pathType === 'file') {
+                            vscode.env.openExternal(uri);
+                        } else if (pathType === 'folder') {
+                            vscode.commands.executeCommand('revealFileInOS', uri);
+                        }
+                    };
+                }
+                vscode.window
+                    .showInformationMessage(Strings.exportSucceeded, ...Object.keys(items))
+                    .then((selection) => {
+                        if (selection && selection in items) items[selection]();
+                    });
+            },
+            onError: (error) => {
+                vscode.window.showErrorMessage(error);
+            },
+            // onProgress events are automatically logged by the service
+        };
 
-    const events: PdfExportEvents = {
-        onSuccess: (exportInfo) => {
-            const items: Record<string, () => void> = {};
-            if (exportInfo) {
-                const [exportPath, pathType] = exportInfo;
-                items[Strings.openPdf] = () => {
-                    const uri = vscode.Uri.file(exportPath);
-                    if (pathType === 'file') {
-                        vscode.env.openExternal(uri);
-                    } else if (pathType === 'folder') {
-                        vscode.commands.executeCommand('revealFileInOS', uri);
-                    }
-                };
-            }
-            vscode.window.showInformationMessage(Strings.exportSucceeded, ...Object.keys(items)).then((selection) => {
-                if (selection && selection in items) items[selection]();
-            });
-            logger.dispose();
-        },
-        onError: (error) => {
-            vscode.window.showErrorMessage(error);
-            logger.dispose();
-        },
-        // onProgress events are automatically logged by the service
-    };
-
-    try {
-        await exportService.exportToPdf(exportConfig, events);
-    } catch (error) {
-        const errorMessage = `Export failed: ${error}`;
-        vscode.window.showErrorMessage(errorMessage);
-        logger.error(errorMessage);
-        logger.dispose();
+        try {
+            await this.exportService.exportToPdf(exportConfig, events);
+        } catch (error) {
+            const errorMessage = `Export failed: ${error}`;
+            vscode.window.showErrorMessage(errorMessage);
+            this.logger.error(errorMessage);
+        }
     }
 }
