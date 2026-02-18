@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Added an *Open PDF* button to the PDF export notification, to easily open the exported PDF file.
+- Logs from PDF export are now persistent in the `Quarkdown PDF Export` output channel.
 
 ## [1.0.5] - 2026-02-16
 
