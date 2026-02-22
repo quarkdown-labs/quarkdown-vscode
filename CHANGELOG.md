@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.1.1] - 2026-02-21
 
 - Fixed missing syntax highlighting for the base Markdown grammar, accidentally introduced in v1.1.0.
 
