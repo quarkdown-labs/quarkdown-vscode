@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Fixed missing syntax highlighting for the base Markdown grammar, accidentally introduced in v1.1.0.
+
 ## [1.1.0] - 2026-02-17
 
 - Added an *Open PDF* button to the PDF export notification, to easily open the exported PDF file.
