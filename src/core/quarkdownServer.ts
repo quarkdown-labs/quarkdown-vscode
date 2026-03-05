@@ -59,7 +59,7 @@ export class QuarkdownServer {
             ...config,
         };
         this.logger = this.config.logger;
-        this.url = `http://localhost:${this.config.port}/live`;
+        this.url = `http://127.0.0.1:${this.config.port}/live`;
     }
 
     /**

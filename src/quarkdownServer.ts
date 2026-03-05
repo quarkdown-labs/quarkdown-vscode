@@ -24,7 +24,7 @@ export class QuarkdownLivePreviewServer {
     }
 
     public get url(): string {
-        return this.server?.url ?? 'http://localhost:8099/live';
+        return this.server?.url ?? 'http://127.0.0.1:8099/live';
     }
 
     public setEventHandlers(events: ServerEvents): void {

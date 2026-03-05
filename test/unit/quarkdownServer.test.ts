@@ -33,10 +33,10 @@ describe('QuarkdownServer', () => {
 
     it('URL includes configured port; defaults to 8099', () => {
         server = new QuarkdownServer(defaultConfig);
-        expect(server.url).toBe('http://localhost:8099/live');
+        expect(server.url).toBe('http://127.0.0.1:8099/live');
 
         server = new QuarkdownServer({ ...defaultConfig, port: 3000 });
-        expect(server.url).toBe('http://localhost:3000/live');
+        expect(server.url).toBe('http://127.0.0.1:3000/live');
     });
 
     it('start() calls ProcessManager.start with preview command', async () => {
@@ -62,7 +62,7 @@ describe('QuarkdownServer', () => {
 
         await server.start();
         // Allow async monitoring to complete
-        await vi.waitFor(() => expect(onReady).toHaveBeenCalledWith('http://localhost:8099/live'));
+        await vi.waitFor(() => expect(onReady).toHaveBeenCalledWith('http://127.0.0.1:8099/live'));
     });
 
     it('start() begins continuous polling when initial poll fails', async () => {
@@ -86,7 +86,7 @@ describe('QuarkdownServer', () => {
         vi.mocked(HttpPoller.checkOnce).mockResolvedValue(true);
         await vi.advanceTimersByTimeAsync(1000);
 
-        expect(onReady).toHaveBeenCalledWith('http://localhost:8099/live');
+        expect(onReady).toHaveBeenCalledWith('http://127.0.0.1:8099/live');
 
         vi.useRealTimers();
     });

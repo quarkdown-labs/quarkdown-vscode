@@ -71,7 +71,7 @@ describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
     it('starts real preview server and fires onReady', async () => {
         const readyUrl = await startAndWaitForReady(fixturePath, 18099);
 
-        expect(readyUrl).toContain('localhost');
+        expect(readyUrl).toContain('127.0.0.1');
     });
 
     it('server responds to HTTP after ready', async () => {
