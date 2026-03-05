@@ -44,7 +44,7 @@ jobs:
 
       - uses: quarkdown-labs/setup-quarkdown@v1
         with:
-          quarkdown-version: devbuild
+          quarkdown-version: 1.13.0
 
       - run: yarn install --frozen-lockfile
 
