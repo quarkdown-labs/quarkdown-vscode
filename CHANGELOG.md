@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.1.2] - 2026-03-05
 
 - Fixed live preview sometimes timing out on Windows.
 
