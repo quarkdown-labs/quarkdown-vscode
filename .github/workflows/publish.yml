@@ -56,3 +56,4 @@ jobs:
         with:
           commit_message: "chore: release ${GITHUB_REF_NAME#v}"
           file_pattern: "package.json CHANGELOG.md"
+          branch: main
