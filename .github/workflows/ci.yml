@@ -3,8 +3,14 @@ name: Test
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
   workflow_dispatch:
   workflow_call:
 

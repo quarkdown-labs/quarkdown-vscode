@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Fixed live preview rendering Mermaid diagrams incorrectly at startup.
+
 ## [1.1.2] - 2026-03-05
 
 - Fixed live preview sometimes timing out on Windows.
