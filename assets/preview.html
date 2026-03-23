@@ -73,7 +73,7 @@
             height: 100%;
             min-height: 0;
             min-width: 0;
-            display: none;
+            visibility: hidden;
             overflow: auto;
 
             /* Scaling controls */
@@ -166,7 +166,7 @@
             updateZoomValue();
             clearTimeout(hintTimer);
             loading.style.display = 'none';
-            frame.style.display = 'block';
+            frame.style.visibility = 'visible';
             zoomControls.style.display = 'flex';
             
             zoomIn.addEventListener('click', () => setZoomValue(scaleFactor + ZOOM_DELTA));
