@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.1.3] - 2026-03-22
 
 - Fixed live preview rendering Mermaid diagrams incorrectly at startup.
 

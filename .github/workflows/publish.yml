@@ -19,7 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
           submodules: recursive
 
       - uses: actions/setup-node@v4
@@ -51,9 +50,7 @@ jobs:
 
       - name: Push changelog and version bump to main
         uses: stefanzweifel/git-auto-commit-action@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
         with:
-          commit_message: "chore: release ${GITHUB_REF_NAME#v}"
+          commit_message: "chore: release ${{ github.ref_name }}"
           file_pattern: "package.json CHANGELOG.md"
           branch: main
