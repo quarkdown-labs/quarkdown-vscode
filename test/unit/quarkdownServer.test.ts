@@ -53,6 +53,20 @@ describe('QuarkdownServer', () => {
         expect(config.args).toContain('--server-port');
     });
 
+    it('start() forwards additionalArgs to the preview command', async () => {
+        server = new QuarkdownServer({
+            ...defaultConfig,
+            additionalArgs: ['--pretty', '-Dkey=value'],
+        });
+        vi.mocked(HttpPoller.pollUntilReady).mockResolvedValue(true);
+
+        await server.start();
+
+        const config = vi.mocked(ProcessManager.prototype.start).mock.calls[0][0];
+        expect(config.args).toContain('--pretty');
+        expect(config.args).toContain('-Dkey=value');
+    });
+
     it('start() fires onReady when initial pollUntilReady succeeds', async () => {
         vi.mocked(HttpPoller.pollUntilReady).mockResolvedValue(true);
 

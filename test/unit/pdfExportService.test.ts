@@ -41,6 +41,22 @@ describe('PdfExportService', () => {
         expect(config.args).toContain('--pdf');
     });
 
+    it('forwards additionalArgs to the spawned process', async () => {
+        vi.mocked(ProcessManager.prototype.start).mockImplementation(async (config) => {
+            config.events?.onExit?.(0, null);
+        });
+
+        await service.exportToPdf({
+            ...defaultConfig,
+            additionalArgs: ['--pretty', '-Dkey=value'],
+        });
+
+        const config = vi.mocked(ProcessManager.prototype.start).mock.calls[0][0];
+        expect(config.args).toContain('--pdf');
+        expect(config.args).toContain('--pretty');
+        expect(config.args).toContain('-Dkey=value');
+    });
+
     it('fires onSuccess on exit code 0 with empty stderr', async () => {
         vi.mocked(ProcessManager.prototype.start).mockImplementation(async (config) => {
             config.events?.onExit?.(0, null);

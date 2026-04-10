@@ -13,6 +13,8 @@ export interface PdfExportConfig {
     filePath: string;
     /** Output directory for the PDF */
     outputDirectory: string;
+    /** Additional command line arguments appended to the compiler invocation */
+    additionalArgs?: string[];
     /** Logger for operation tracking */
     logger?: Logger;
 }
@@ -57,7 +59,8 @@ export class PdfExportService {
         const command = QuarkdownCommandBuilder.buildPdfExportCommand(
             config.executablePath,
             config.filePath,
-            config.outputDirectory
+            config.outputDirectory,
+            config.additionalArgs
         );
 
         logger.info(`Starting PDF export: ${command.command} ${command.args.join(' ')}`);

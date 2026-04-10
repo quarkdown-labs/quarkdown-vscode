@@ -41,6 +41,7 @@ export class QuarkdownLivePreviewServer {
             executablePath: config.executablePath,
             filePath: filePath,
             outputDirectory: config.outputDirectory,
+            additionalArgs: config.additionalCompilerOptions,
             logger: this.logger,
         });
 

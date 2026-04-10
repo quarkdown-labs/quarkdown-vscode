@@ -86,10 +86,16 @@ export class QuarkdownCommandBuilder {
      * @param executablePath Path to the Quarkdown executable
      * @param filePath Path to the source .qd file
      * @param outputDir Output directory for the PDF
+     * @param additionalArgs Additional command line arguments
      * @returns Complete command configuration for PDF export
      */
-    public static buildPdfExportCommand(executablePath: string, filePath: string, outputDir: string): QuarkdownCommand {
-        return this.buildCompileCommand(executablePath, filePath, outputDir, ['--pdf']);
+    public static buildPdfExportCommand(
+        executablePath: string,
+        filePath: string,
+        outputDir: string,
+        additionalArgs: string[] = []
+    ): QuarkdownCommand {
+        return this.buildCompileCommand(executablePath, filePath, outputDir, ['--pdf', ...additionalArgs]);
     }
 
     /**

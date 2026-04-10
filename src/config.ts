@@ -8,6 +8,7 @@ const CONFIG_ROOT = 'quarkdown';
 const CONFIG_KEYS = {
     executablePath: 'path',
     outputDirectory: 'outputDirectory',
+    additionalCompilerOptions: 'additionalCompilerOptions',
 } as const;
 
 /**
@@ -18,6 +19,8 @@ export interface QuarkdownConfig {
     executablePath: string;
     /** Output directory for Quarkdown artifacts */
     outputDirectory: string;
+    /** Additional command line options appended to every compiler invocation */
+    additionalCompilerOptions: string[];
 }
 
 /**
@@ -70,10 +73,22 @@ export const getOutputDirectory = (): string => {
 };
 
 /**
+ * Get the additional compiler options to append to every Quarkdown compiler
+ * invocation. Defaults to an empty array if not configured.
+ * Non-string entries (if any) are filtered out defensively so the resulting
+ * array is always safe to spread into a command's argv.
+ */
+export const getAdditionalCompilerOptions = (): string[] => {
+    const raw = getConfigValue<unknown[]>(CONFIG_KEYS.additionalCompilerOptions, [], Array.isArray);
+    return raw.filter((value): value is string => typeof value === 'string' && value.length > 0);
+};
+
+/**
  * Get all Quarkdown configuration as a typed object.
  * Useful for passing configuration to pure functions that don't depend on VS Code.
  */
 export const getQuarkdownConfig = (): QuarkdownConfig => ({
     executablePath: getExecutablePath(),
     outputDirectory: getOutputDirectory(),
+    additionalCompilerOptions: getAdditionalCompilerOptions(),
 });

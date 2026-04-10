@@ -36,6 +36,7 @@ export class QuarkdownPdfExporter {
             executablePath: config.executablePath,
             filePath: document.fileName,
             outputDirectory: config.outputDirectory,
+            additionalArgs: config.additionalCompilerOptions,
             logger: this.logger,
         };
 

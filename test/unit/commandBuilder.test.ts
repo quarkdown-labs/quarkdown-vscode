@@ -87,6 +87,22 @@ describe('QuarkdownCommandBuilder', () => {
             expect(result.args).toContain('--pdf');
             expect(result.args).not.toContain('--browser');
         });
+
+        it('appends additional args after --pdf', () => {
+            Object.defineProperty(process, 'platform', { value: 'linux' });
+
+            const result = QuarkdownCommandBuilder.buildPdfExportCommand(
+                'quarkdown',
+                '/project/main.qd',
+                '/project/out',
+                ['--pretty', '--verbose']
+            );
+
+            expect(result.args).toContain('--pdf');
+            expect(result.args).toContain('--pretty');
+            expect(result.args).toContain('--verbose');
+            expect(result.args.indexOf('--pdf')).toBeLessThan(result.args.indexOf('--pretty'));
+        });
     });
 
     describe('buildPreviewCommand', () => {
@@ -106,6 +122,21 @@ describe('QuarkdownCommandBuilder', () => {
             expect(result.args).toContain('9999');
             expect(result.args).toContain('--browser');
             expect(result.args).toContain('none');
+        });
+
+        it('appends additional args to the preview command', () => {
+            Object.defineProperty(process, 'platform', { value: 'linux' });
+
+            const result = QuarkdownCommandBuilder.buildPreviewCommand(
+                'quarkdown',
+                '/project/main.qd',
+                '/project/out',
+                9999,
+                ['--pretty', '-Dkey=value']
+            );
+
+            expect(result.args).toContain('--pretty');
+            expect(result.args).toContain('-Dkey=value');
         });
     });
 });
