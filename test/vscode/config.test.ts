@@ -12,9 +12,12 @@ suite('Config', () => {
         assert.strictEqual(value, 'quarkdown');
     });
 
-    test('getOutputDirectory() returns path ending with "output" by default', () => {
+    test('getOutputDirectory() returns path ending with "quarkdown-output" by default', () => {
         const value = getOutputDirectory();
-        assert.ok(value.endsWith('output'), `Expected path ending with "output", got "${value}"`);
+        assert.ok(
+            value.endsWith('quarkdown-output'),
+            `Expected path ending with "quarkdown-output", got "${value}"`
+        );
     });
 
     test('getAdditionalCompilerOptions() returns empty array by default', () => {
