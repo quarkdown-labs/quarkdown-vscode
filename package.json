@@ -121,12 +121,9 @@
             "description": "Output directory for Quarkdown artifacts, relative to the workspace root"
           },
           "quarkdown.additionalCompilerOptions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "default": [],
-            "description": "Additional command line options appended to every Quarkdown compiler, for both live preview and PDF export"
+            "type": "string",
+            "default": "",
+            "description": "Additional command line options appended to every Quarkdown compiler invocation (live preview and PDF export)"
           }
         }
       }
