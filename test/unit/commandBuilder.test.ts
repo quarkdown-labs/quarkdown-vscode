@@ -106,7 +106,7 @@ describe('QuarkdownCommandBuilder', () => {
     });
 
     describe('buildPreviewCommand', () => {
-        it('includes --preview, --watch, --server-port, and stringified port', () => {
+        it('includes --preview, --watch, --server-port, --out-name, and stringified port', () => {
             Object.defineProperty(process, 'platform', { value: 'linux' });
 
             const result = QuarkdownCommandBuilder.buildPreviewCommand(
@@ -122,6 +122,8 @@ describe('QuarkdownCommandBuilder', () => {
             expect(result.args).toContain('9999');
             expect(result.args).toContain('--browser');
             expect(result.args).toContain('none');
+            expect(result.args).toContain('--out-name');
+            expect(result.args).toContain('vscode-preview');
         });
 
         it('appends additional args to the preview command', () => {

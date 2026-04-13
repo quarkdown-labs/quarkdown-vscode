@@ -122,6 +122,8 @@ export class QuarkdownCommandBuilder {
             port.toString(),
             '--browser',
             'none',
+            '--out-name',
+            'vscode-preview',
             ...additionalArgs,
         ]);
     }
