@@ -74,13 +74,12 @@ export const getOutputDirectory = (): string => {
 
 /**
  * Get the additional compiler options to append to every Quarkdown compiler
- * invocation. Defaults to an empty array if not configured.
- * Non-string entries (if any) are filtered out defensively so the resulting
- * array is always safe to spread into a command's argv.
+ * invocation. The setting is a single string that is split on whitespace
+ * into individual arguments. Defaults to an empty array if not configured.
  */
 export const getAdditionalCompilerOptions = (): string[] => {
-    const raw = getConfigValue<unknown[]>(CONFIG_KEYS.additionalCompilerOptions, [], Array.isArray);
-    return raw.filter((value): value is string => typeof value === 'string' && value.length > 0);
+    const raw = getConfigValue<string>(CONFIG_KEYS.additionalCompilerOptions, '');
+    return raw.split(/\s+/).filter((arg) => arg.length > 0);
 };
 
 /**
