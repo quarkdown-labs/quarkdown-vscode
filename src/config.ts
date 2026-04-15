@@ -58,10 +58,10 @@ export const getExecutablePath = (): string => getConfigValue<string>(CONFIG_KEY
  * resolved as an absolute path against the workspace root.
  * If the configured value is already absolute or no workspace is open,
  * it is returned as-is.
- * Defaults to 'output' if not configured or if empty.
+ * Defaults to 'quarkdown-output' if not configured or if empty.
  */
 export const getOutputDirectory = (): string => {
-    const outputDir = getConfigValue<string>(CONFIG_KEYS.outputDirectory, 'output', isNonEmptyString);
+    const outputDir = getConfigValue<string>(CONFIG_KEYS.outputDirectory, 'quarkdown-output', isNonEmptyString);
     if (path.isAbsolute(outputDir)) {
         return outputDir;
     }

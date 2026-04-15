@@ -117,7 +117,7 @@
           },
           "quarkdown.outputDirectory": {
             "type": "string",
-            "default": "output",
+            "default": "quarkdown-output",
             "description": "Output directory for Quarkdown artifacts, relative to the workspace root"
           },
           "quarkdown.additionalCompilerOptions": {
