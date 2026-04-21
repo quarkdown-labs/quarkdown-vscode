@@ -2,27 +2,29 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-04-21
+
 This release anticipates changes for the release of Quarkdown v2.0.0.
 
-- Added a new *Additional Compiler Options* setting to allow users to specify extra command-line options for the Quarkdown compiler, to support the upcoming permission system feature.
-- Changed the default output directory name from `output` to `quarkdown-output`, mirroring the change in Quarkdown v2.
+-   Added a new _Additional Compiler Options_ setting to allow users to specify extra command-line options for the Quarkdown compiler, to support the upcoming permission system feature.
+-   Changed the default output directory name from `output` to `quarkdown-output`, mirroring the change in Quarkdown v2.
 
 ## [1.1.3] - 2026-03-22
 
-- Fixed live preview rendering Mermaid diagrams incorrectly at startup.
+-   Fixed live preview rendering Mermaid diagrams incorrectly at startup.
 
 ## [1.1.2] - 2026-03-05
 
-- Fixed live preview sometimes timing out on Windows.
+-   Fixed live preview sometimes timing out on Windows.
 
 ## [1.1.1] - 2026-02-21
 
-- Fixed missing syntax highlighting for the base Markdown grammar, accidentally introduced in v1.1.0.
+-   Fixed missing syntax highlighting for the base Markdown grammar, accidentally introduced in v1.1.0.
 
 ## [1.1.0] - 2026-02-17
 
-- Added an *Open PDF* button to the PDF export notification, to easily open the exported PDF file.
-- Logs from PDF export are now persistent in the `Quarkdown PDF Export` output channel.
+-   Added an _Open PDF_ button to the PDF export notification, to easily open the exported PDF file.
+-   Logs from PDF export are now persistent in the `Quarkdown PDF Export` output channel.
 
 ## [1.0.5] - 2026-02-16
 
@@ -43,6 +45,8 @@ This release anticipates changes for the release of Quarkdown v2.0.0.
 
 -   Fixed process spawning issues on Windows.
 
-[Unreleased]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.0.5...HEAD
+[Unreleased]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.2.0...HEAD
+
+[1.2.0]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.0.5...v1.2.0
 
 [1.0.5]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/6269170cb1312a38275d1f90fe56155b5f52be37...v1.0.5
