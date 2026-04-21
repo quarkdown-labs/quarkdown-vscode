@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+This release anticipates changes for the release of Quarkdown v2.0.0.
+
+- Added a new *Additional Compiler Options* setting to allow users to specify extra command-line options for the Quarkdown compiler, to support the upcoming permission system feature.
+- Changed the default output directory name from `output` to `quarkdown-output`, mirroring the change in Quarkdown v2.
+
 ## [1.1.3] - 2026-03-22
 
 - Fixed live preview rendering Mermaid diagrams incorrectly at startup.
