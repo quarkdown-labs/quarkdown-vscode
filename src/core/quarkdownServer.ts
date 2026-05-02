@@ -153,7 +153,7 @@ export class QuarkdownServer {
             url: this.url,
             maxAttempts: 30,
             delayMs: 250,
-            timeout: 250,
+            timeout: 2000,
         });
 
         if (initialCheck) {
@@ -179,7 +179,7 @@ export class QuarkdownServer {
         this.pollingTimer = setInterval(async () => {
             attempts++;
 
-            const ready = await HttpPoller.checkOnce(this.url, 200);
+            const ready = await HttpPoller.checkOnce(this.url, 2000);
             if (ready) {
                 this.logger.info('Server became ready during polling');
                 this.events?.onReady?.(this.url);
