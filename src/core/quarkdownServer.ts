@@ -150,6 +150,7 @@ export class QuarkdownServer {
      */
     private async startServerMonitoring(): Promise<void> {
         this.logger.info('Monitoring server availability...');
+        const pollingRunId = this.pollingRunId;
 
         // Initial check with higher timeout tolerance
         const initialCheck = await HttpPoller.pollUntilReady({
@@ -158,6 +159,10 @@ export class QuarkdownServer {
             delayMs: 250,
             timeout: 2000,
         });
+
+        if (pollingRunId !== this.pollingRunId) {
+            return;
+        }
 
         if (initialCheck) {
             this.logger.info('Server is ready');
