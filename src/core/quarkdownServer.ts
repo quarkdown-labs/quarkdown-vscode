@@ -39,14 +39,17 @@ export interface QuarkdownServerEvents {
  * monitors its availability through HTTP polling.
  */
 export class QuarkdownServer {
-    /** Maximum number of 1-second poll attempts before giving up on server readiness. */
+    /** Maximum number of continuous poll attempts before giving up on server readiness. */
     private static readonly MAX_CONTINUOUS_POLL_ATTEMPTS = 120;
+    /** Delay between continuous poll attempts once the initial readiness window expires. */
+    private static readonly CONTINUOUS_POLL_DELAY_MS = 1000;
 
     private readonly processManager: ProcessManager;
     private readonly config: Required<QuarkdownServerConfig>;
     private readonly logger: Logger;
     private events?: QuarkdownServerEvents;
     private pollingTimer?: NodeJS.Timeout;
+    private pollingRunId = 0;
 
     public readonly url: string;
 
@@ -168,18 +171,24 @@ export class QuarkdownServer {
 
     /**
      * Start continuous polling to detect when server becomes available.
-     * Gives up after {@link MAX_CONTINUOUS_POLL_ATTEMPTS} attempts (seconds)
-     * and emits an error to avoid polling indefinitely.
+     * Gives up after {@link MAX_CONTINUOUS_POLL_ATTEMPTS} attempts and emits
+     * an error to avoid polling indefinitely.
      */
     private startContinuousPolling(): void {
         this.stopPolling();
 
         let attempts = 0;
+        const pollingRunId = this.pollingRunId;
 
-        this.pollingTimer = setInterval(async () => {
+        const poll = async (): Promise<void> => {
             attempts++;
 
             const ready = await HttpPoller.checkOnce(this.url, 2000);
+
+            if (pollingRunId !== this.pollingRunId) {
+                return;
+            }
+
             if (ready) {
                 this.logger.info('Server became ready during polling');
                 this.events?.onReady?.(this.url);
@@ -191,16 +200,23 @@ export class QuarkdownServer {
                 this.logger.error(`Server did not become ready after ${attempts} poll attempts`);
                 this.stopPolling();
                 this.events?.onError?.('Server did not become ready in time. Please try again.');
+                return;
             }
-        }, 1000);
+
+            this.pollingTimer = setTimeout(poll, QuarkdownServer.CONTINUOUS_POLL_DELAY_MS);
+        };
+
+        void poll();
     }
 
     /**
      * Stop continuous polling.
      */
     private stopPolling(): void {
+        this.pollingRunId++;
+
         if (this.pollingTimer) {
-            clearInterval(this.pollingTimer);
+            clearTimeout(this.pollingTimer);
             this.pollingTimer = undefined;
         }
     }
