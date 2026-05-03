@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+-  Fixed live preview loading infinitely on slower machines due to aggressive polling timeouts.
+
 ## [1.2.0] - 2026-04-21
 
 This release anticipates changes for the release of Quarkdown v2.0.0.
