@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
--  Fixed live preview loading infinitely on slower machines due to aggressive polling timeouts.
+## [1.2.1] - 2026-05-03
+
+-   Fixed live preview loading infinitely on slower machines due to aggressive polling timeouts.
 
 ## [1.2.0] - 2026-04-21
 
@@ -47,7 +49,9 @@ This release anticipates changes for the release of Quarkdown v2.0.0.
 
 -   Fixed process spawning issues on Windows.
 
-[Unreleased]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.2.1...HEAD
+
+[1.2.1]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.2.0...v1.2.1
 
 [1.2.0]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.0.5...v1.2.0
 
