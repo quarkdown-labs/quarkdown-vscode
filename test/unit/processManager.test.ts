@@ -154,6 +154,13 @@ function isAlive(pid: number): boolean {
     }
 }
 
+/**
+ * Windows terminates with `taskkill /f`, which is unconditional: there is no graceful
+ * phase to observe, and no process groups. Tests of those semantics are Unix-only, and the
+ * Windows termination path is covered end-to-end by the integration suite instead.
+ */
+const IS_WINDOWS = process.platform === 'win32';
+
 describe('ProcessManager termination', () => {
     /**
      * Start a Node child running `script`, held open by an interval, and resolve with its
@@ -195,7 +202,7 @@ describe('ProcessManager termination', () => {
         expect(manager.isRunning()).toBe(false);
     });
 
-    it('stop() resolves only once the child has really exited', async () => {
+    it.skipIf(IS_WINDOWS)('stop() resolves only once the child has really exited', async () => {
         const manager = new ProcessManager();
         const pid = await startReadyChild(manager, SLOW_TO_EXIT);
 
@@ -212,7 +219,7 @@ describe('ProcessManager termination', () => {
         expect(isAlive(pid)).toBe(false);
     });
 
-    it('escalates to an unconditional kill when the child ignores SIGTERM', async () => {
+    it.skipIf(IS_WINDOWS)('escalates to an unconditional kill when the child ignores SIGTERM', async () => {
         const manager = new ProcessManager();
         const pid = await startReadyChild(manager, IGNORES_SIGTERM);
 
@@ -222,7 +229,7 @@ describe('ProcessManager termination', () => {
         expect(manager.isRunning()).toBe(false);
     });
 
-    it('terminates the whole process group, not just the direct child', async () => {
+    it.skipIf(IS_WINDOWS)('terminates the whole process group, not just the direct child', async () => {
         const manager = new ProcessManager();
         let stdout = '';
 
