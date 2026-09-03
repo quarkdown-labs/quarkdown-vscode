@@ -5,7 +5,6 @@ import { isQuarkdownFile } from '../core/utils';
 
 /**
  * Resolve the Quarkdown executable command + arguments, accounting for platform differences.
- * On Windows we attempt to call the .bat launcher (auto-appended if missing).
  *
  * @param additionalArgs Additional CLI arguments to pass to Quarkdown.
  * @returns Object containing a command & args suitable for `cp.spawn` / `cp.execFile`.

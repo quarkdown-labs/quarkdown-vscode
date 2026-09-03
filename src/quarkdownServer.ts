@@ -37,32 +37,44 @@ export class QuarkdownLivePreviewServer {
 
         const config = getQuarkdownConfig();
 
-        this.server = new QuarkdownServer({
+        const server = new QuarkdownServer({
             executablePath: config.executablePath,
             filePath: filePath,
             outputDirectory: config.outputDirectory,
             additionalArgs: config.additionalCompilerOptions,
             logger: this.logger,
         });
+        this.server = server;
 
-        // Set up event forwarding
+        // Set up event forwarding. Every handler is bound to this specific server: one
+        // stopped earlier can outlive the call that stopped it, and its late events must
+        // not be reported as, or clear the reference to, the server that replaced it.
+        const isCurrent = () => this.server === server;
+
         const serverEvents: QuarkdownServerEvents = {
             onReady: (url) => {
-                this.events?.onReady(url);
+                if (isCurrent()) {
+                    this.events?.onReady(url);
+                }
             },
             onError: (error) => {
-                this.events?.onError(error);
+                if (isCurrent()) {
+                    this.events?.onError(error);
+                }
             },
             onExit: (code, signal) => {
+                if (!isCurrent()) {
+                    return;
+                }
                 this.cleanup();
                 this.events?.onExit(code, signal);
             },
         };
 
-        this.server.setEventHandlers(serverEvents);
+        server.setEventHandlers(serverEvents);
 
         try {
-            await this.server.start();
+            await server.start();
         } catch (error) {
             this.logger.error(`Failed to start server: ${error}`);
             this.events?.onError(`Failed to start server: ${error}`);
@@ -71,8 +83,16 @@ export class QuarkdownLivePreviewServer {
 
     /** Stop the server process */
     public async stop(): Promise<void> {
-        if (this.server) {
-            await this.server.stop();
+        const server = this.server;
+
+        if (!server) {
+            return;
+        }
+
+        await server.stop();
+
+        // A start() may have replaced the server while the stop was in flight.
+        if (this.server === server) {
             this.cleanup();
         }
     }

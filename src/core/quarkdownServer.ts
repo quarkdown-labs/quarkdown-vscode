@@ -92,6 +92,7 @@ export class QuarkdownServer {
             command: command.command,
             args: command.args,
             cwd: command.cwd,
+            logger: this.logger,
             events: {
                 onError: (error) => {
                     this.logger.error(`Process error: ${error.message}`);
@@ -113,7 +114,8 @@ export class QuarkdownServer {
             await this.processManager.start(processConfig);
             this.logger.info(`Process started with PID: ${this.processManager.getPid()}`);
 
-            // Start monitoring server availability
+            // Not awaited: start() returns once the process exists, and readiness is
+            // reported later through onReady/onError.
             void this.startServerMonitoring();
         } catch (error) {
             this.logger.error(`Failed to start process: ${error}`);
@@ -152,7 +154,8 @@ export class QuarkdownServer {
         this.logger.info('Monitoring server availability...');
         const pollingRunId = this.pollingRunId;
 
-        // Initial check with higher timeout tolerance
+        // Poll quickly across the window in which a healthy server normally comes up,
+        // then hand over to the slower loop below rather than giving up on a slow one.
         const initialCheck = await HttpPoller.pollUntilReady({
             url: this.url,
             maxAttempts: 30,

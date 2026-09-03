@@ -1,4 +1,5 @@
 import * as cp from 'child_process';
+import { Logger, NoOpLogger } from './logger';
 
 /**
  * Events that can be emitted by a managed process.
@@ -22,19 +23,30 @@ export interface ProcessConfig {
     args: string[];
     cwd?: string;
     events?: ProcessEvents;
+    /** Logger for termination diagnostics (defaults to {@link NoOpLogger}) */
+    logger?: Logger;
 }
 
 /**
  * Pure process management class that handles child process lifecycle
  * without any VS Code dependencies. This allows for better separation
  * of concerns and easier testing.
+ *
+ * The class tracks one child at a time and terminates it as a whole tree, so a caller
+ * such as a preview server can restart without racing the previous process for a port.
+ * See {@link stop} for the exact guarantee and its one exception.
  */
 export class ProcessManager {
-    /** Timeout before escalating SIGTERM to SIGKILL during stop(). */
+    /** Delay before escalating a termination request to an unconditional kill. */
     private static readonly KILL_TIMEOUT_MS = 5000;
+    /** Extra delay after escalation before {@link stop} gives up waiting for the exit event. */
+    private static readonly GIVE_UP_TIMEOUT_MS = 2000;
 
     private process: cp.ChildProcess | undefined;
-    private isTerminating = false;
+    /** The in-flight termination, shared by every caller of {@link stop} until it settles. */
+    private stopping: Promise<void> | undefined;
+    /** Reporting channel for the current child; replaced by every {@link start}. */
+    private logger: Logger = new NoOpLogger();
 
     /**
      * Start a new process with the given configuration.
@@ -45,34 +57,43 @@ export class ProcessManager {
     public async start(config: ProcessConfig): Promise<void> {
         await this.stop();
 
-        try {
-            this.process = cp.spawn(config.command, config.args, { cwd: config.cwd });
+        this.logger = config.logger ?? new NoOpLogger();
 
-            if (config.events?.onStdout && this.process.stdout) {
-                this.process.stdout.on('data', (data) => {
+        try {
+            // On Unix the child leads its own process group, so one signal reaches wrapper
+            // scripts that did not exec, whatever they launched, and any grandchildren.
+            // Windows must stay attached: `detached` there lets the child outlive the
+            // extension host rather than die with it, and its tree is walked by
+            // `taskkill /t` anyway.
+            const child = cp.spawn(config.command, config.args, {
+                cwd: config.cwd,
+                detached: process.platform !== 'win32',
+            });
+            this.process = child;
+
+            if (config.events?.onStdout && child.stdout) {
+                child.stdout.on('data', (data) => {
                     config.events!.onStdout!(data.toString());
                 });
             }
 
-            if (config.events?.onStderr && this.process.stderr) {
-                this.process.stderr.on('data', (data) => {
+            if (config.events?.onStderr && child.stderr) {
+                child.stderr.on('data', (data) => {
                     config.events!.onStderr!(data.toString());
                 });
             }
 
             if (config.events?.onError) {
-                this.process.on('error', config.events.onError);
+                child.on('error', config.events.onError);
             }
 
             if (config.events?.onExit) {
-                this.process.on('exit', config.events.onExit);
+                child.on('exit', config.events.onExit);
             }
 
-            // Clean up references when process exits
-            this.process.on('exit', () => {
-                this.process = undefined;
-                this.isTerminating = false;
-            });
+            // A child stopped earlier can outlive the call that stopped it, so its late
+            // exit event must not clear the reference to the process that replaced it.
+            child.on('exit', () => this.detach(child));
         } catch (error) {
             this.process = undefined;
             throw error;
@@ -80,73 +101,129 @@ export class ProcessManager {
     }
 
     /**
-     * Stop the currently running process.
-     * Uses appropriate termination method based on platform.
+     * Stop the currently running process and the whole tree below it.
+     *
+     * Concurrent callers share one termination and receive the same promise. It settles
+     * only once the child has exited, so a caller that stops and restarts cannot spawn a
+     * replacement while the previous process still holds resources such as a fixed server
+     * port. The exception is a child that survives forced termination: it is abandoned,
+     * leaving {@link isRunning} false while the operating system process may persist.
      */
-    public async stop(): Promise<void> {
-        if (!this.process || this.isTerminating) {
-            return;
+    public stop(): Promise<void> {
+        if (!this.process) {
+            return Promise.resolve();
         }
 
-        this.isTerminating = true;
-        const pid = this.process.pid;
+        if (this.stopping) {
+            return this.stopping;
+        }
 
-        if (!pid) {
-            this.process = undefined;
-            this.isTerminating = false;
-            return;
+        const stopping = this.terminate(this.process).finally(() => {
+            if (this.stopping === stopping) {
+                this.stopping = undefined;
+            }
+        });
+        this.stopping = stopping;
+
+        return stopping;
+    }
+
+    /**
+     * Terminate one specific child and settle once its exit event has fired.
+     *
+     * The exit event is the only reliable proof that a process is gone: on Windows
+     * `taskkill` reports failure for trees that were already partly dead, and on Unix the
+     * signal call returns long before the child is reaped.
+     *
+     * Termination escalates to an unconditional kill after {@link KILL_TIMEOUT_MS}; a
+     * child surviving even that is abandoned {@link GIVE_UP_TIMEOUT_MS} later, so this
+     * never hands the caller a promise that cannot settle.
+     */
+    private terminate(child: cp.ChildProcess): Promise<void> {
+        const pid = child.pid;
+
+        if (pid === undefined) {
+            this.detach(child);
+            return Promise.resolve();
         }
 
         return new Promise<void>((resolve) => {
-            let resolved = false;
-            let killTimer: NodeJS.Timeout | undefined;
-
-            const doResolve = () => {
-                if (!resolved) {
-                    resolved = true;
-                    if (killTimer) {
-                        clearTimeout(killTimer);
-                    }
-                    resolve();
-                }
-            };
-
-            // On all platforms, wait for the exit event to ensure the process is truly gone.
-            // This prevents port conflicts when restarting immediately.
-            this.process!.once('exit', doResolve);
-
-            if (process.platform === 'win32') {
-                // On Windows, use taskkill to force terminate the process tree
-                cp.exec(`taskkill /pid ${pid} /t /f`, (error) => {
-                    if (error) {
-                        // If taskkill fails (e.g. process not found), resolve to avoid hanging
-                        doResolve();
-                    }
-                });
-            } else {
-                // On Unix-like systems, send SIGTERM and wait for graceful exit
-                this.process!.kill('SIGTERM');
-
-                // If the process ignores SIGTERM, escalate to SIGKILL after 5 seconds
-                killTimer = setTimeout(() => {
-                    if (!resolved) {
-                        try {
-                            this.process?.kill('SIGKILL');
-                        } catch {
-                            // Process may have already exited
-                            doResolve();
-                        }
-                    }
-                }, ProcessManager.KILL_TIMEOUT_MS);
+            // Declared as a function so the give-up timer below can remove this listener
+            // while the timers it clears are still declared in their natural order.
+            function onExit(): void {
+                clearTimeout(escalateTimer);
+                clearTimeout(giveUpTimer);
+                resolve();
             }
+
+            const escalateTimer = setTimeout(() => {
+                this.logger.warn(`Process ${pid} did not exit within ${ProcessManager.KILL_TIMEOUT_MS}ms, forcing`);
+                this.killTree(pid, true);
+            }, ProcessManager.KILL_TIMEOUT_MS);
+
+            const giveUpTimer = setTimeout(() => {
+                child.removeListener('exit', onExit);
+                this.logger.error(`Process ${pid} survived forced termination; abandoning its handle`);
+                this.detach(child);
+                resolve();
+            }, ProcessManager.KILL_TIMEOUT_MS + ProcessManager.GIVE_UP_TIMEOUT_MS);
+
+            child.once('exit', onExit);
+            this.killTree(pid, false);
         });
+    }
+
+    /**
+     * Request termination of the whole process tree rooted at `pid`.
+     * Never settles anything by itself: whether the tree is gone is decided by the
+     * caller observing the child's exit event.
+     *
+     * @param force Skip the graceful request and kill unconditionally
+     */
+    private killTree(pid: number, force: boolean): void {
+        if (process.platform === 'win32') {
+            // `/t` takes the whole tree, which matters because this extension's direct
+            // child is a `cmd` wrapper and the process worth killing is its grandchild.
+            // A non-zero exit code is not evidence that nothing died — it is also returned
+            // when a tree member vanished between enumeration and kill, or when one member
+            // denied access — so it is logged rather than acted upon.
+            cp.exec(`taskkill /pid ${pid} /t /f`, (error, _stdout, stderr) => {
+                if (error) {
+                    this.logger.warn(`taskkill for pid ${pid} exited with ${error.code}: ${stderr.trim()}`);
+                }
+            });
+            return;
+        }
+
+        const signal: NodeJS.Signals = force ? 'SIGKILL' : 'SIGTERM';
+
+        try {
+            // A negative pid targets the process group created by `detached: true`.
+            process.kill(-pid, signal);
+        } catch {
+            try {
+                process.kill(pid, signal);
+            } catch {
+                // Nothing left to signal, or no permission to signal it. Either way
+                // the exit event, not this call, decides when the child is gone.
+            }
+        }
+    }
+
+    /**
+     * Drop the reference to `child`, but only while it is still the tracked process.
+     */
+    private detach(child: cp.ChildProcess): void {
+        if (this.process === child) {
+            this.process = undefined;
+        }
     }
 
     /**
      * Check if a process is currently running.
      */
     public isRunning(): boolean {
-        return !!this.process && !this.isTerminating;
+        return !!this.process && this.stopping === undefined;
     }
 
     /**
@@ -164,7 +241,9 @@ export class ProcessManager {
      * @param timeoutMs Optional timeout in milliseconds. Rejects with an error if exceeded.
      */
     public waitForExit(timeoutMs?: number): Promise<number | null> {
-        if (!this.process) {
+        const child = this.process;
+
+        if (!child) {
             return Promise.resolve(null);
         }
 
@@ -178,11 +257,11 @@ export class ProcessManager {
                 resolve(code);
             };
 
-            this.process!.once('exit', onExit);
+            child.once('exit', onExit);
 
             if (timeoutMs !== undefined) {
                 timer = setTimeout(() => {
-                    this.process?.removeListener('exit', onExit);
+                    child.removeListener('exit', onExit);
                     reject(new Error(`Process did not exit within ${timeoutMs}ms`));
                 }, timeoutMs);
             }

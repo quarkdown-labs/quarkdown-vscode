@@ -6,4 +6,5 @@ out/
 package-lock.json
 .DS_Store
 output/
+quarkdown-output/
 test_qd/

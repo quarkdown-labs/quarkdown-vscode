@@ -11,20 +11,12 @@ let client: QuarkdownLanguageClient;
  * Sets up language configuration, registers commands, and initializes services.
  */
 export function activate(context: vscode.ExtensionContext): void {
-    // Initialize and start the language client
     client = new QuarkdownLanguageClient();
     void client.start(context);
 
-    // Configure Quarkdown language settings
     setupLanguageConfiguration();
-
-    // Register all extension commands
     registerCommands(context);
-
-    // Set up webview panel serializer to prevent restoration on startup
     registerWebviewSerializer(context);
-
-    // Set up document close handler for automatic preview cleanup
     registerDocumentCloseHandler(context);
 }
 
@@ -102,11 +94,9 @@ function registerDocumentCloseHandler(context: vscode.ExtensionContext): void {
  * Cleans up resources and stops services.
  */
 export async function deactivate(): Promise<void> {
-    // Stop preview and clean up resources
     const previewManager = QuarkdownPreviewManager.getInstance();
     await previewManager.dispose();
 
-    // Stop language client
     if (client) {
         client.dispose();
         await client.stop();

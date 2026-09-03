@@ -45,8 +45,6 @@ function getConfigValue<T>(key: string, defaultValue: T, validate: (value: T) =>
  */
 const isNonEmptyString = (value: string): boolean => value.length > 0;
 
-// Configuration getters with better documentation and validation
-
 /**
  * Get the configured path to the Quarkdown executable.
  * Defaults to 'quarkdown' if not configured.

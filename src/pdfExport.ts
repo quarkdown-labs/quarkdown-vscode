@@ -40,7 +40,6 @@ export class QuarkdownPdfExporter {
             logger: this.logger,
         };
 
-        // Show initial progress message
         vscode.window.showInformationMessage(Strings.exportInProgress);
 
         const events: PdfExportEvents = {

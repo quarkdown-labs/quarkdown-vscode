@@ -71,6 +71,7 @@ export class PdfExportService {
             command: command.command,
             args: command.args,
             cwd: command.cwd,
+            logger,
             events: {
                 onStdout: (data) => {
                     logger.info(data.trim());

@@ -47,7 +47,6 @@ export class QuarkdownLanguageClient {
             clientOptions
         );
 
-        // Set up state change monitoring
         this.client.onDidChangeState((event) => {
             if (event.newState === State.Stopped) {
                 this.logger.error('Stopped unexpectedly');
