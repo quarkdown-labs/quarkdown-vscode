@@ -36,14 +36,13 @@ export interface PdfExportEvents {
  * Handles the compilation of Quarkdown files to PDF format.
  */
 export class PdfExportService {
-    private readonly processManager: ProcessManager;
-    private readonly logger: Logger;
-    private lastStdoutData: string | undefined = undefined;
-
-    constructor() {
-        this.processManager = new ProcessManager();
-        this.logger = new NoOpLogger();
-    }
+    private readonly logger: Logger = new NoOpLogger();
+    /**
+     * The exports currently in flight, one process each. A single shared process would
+     * make each new export terminate its predecessor, since starting a process stops
+     * whatever that manager was already running.
+     */
+    private readonly running = new Set<ProcessManager>();
 
     /**
      * Export a Quarkdown file to PDF.
@@ -54,7 +53,10 @@ export class PdfExportService {
      */
     public async exportToPdf(config: PdfExportConfig, events?: PdfExportEvents): Promise<void> {
         const logger = config.logger || this.logger;
-        this.lastStdoutData = undefined;
+        const processManager = new ProcessManager();
+
+        // Local to this export: concurrent exports must not overwrite each other's output.
+        let lastStdoutData: string | undefined;
 
         const command = QuarkdownCommandBuilder.buildPdfExportCommand(
             config.executablePath,
@@ -76,7 +78,7 @@ export class PdfExportService {
                 onStdout: (data) => {
                     logger.info(data.trim());
                     events?.onProgress?.(data);
-                    this.lastStdoutData = data;
+                    lastStdoutData = data;
                 },
                 onStderr: (data) => {
                     stderrBuffer += data;
@@ -106,11 +108,11 @@ export class PdfExportService {
                     } else {
                         logger.info('PDF export completed successfully');
                         const exportInfo = () => {
-                            if (!this.lastStdoutData) {
+                            if (!lastStdoutData) {
                                 logger.warn('No stdout data to parse for export path');
                                 return undefined;
                             }
-                            const path = getPathFromPdfExportOutput(this.lastStdoutData);
+                            const path = getPathFromPdfExportOutput(lastStdoutData);
                             if (!path) {
                                 logger.warn('Failed to extract export path from stdout data');
                                 return undefined;
@@ -123,27 +125,35 @@ export class PdfExportService {
             },
         };
 
+        this.running.add(processManager);
+
         try {
-            await this.processManager.start(processConfig);
-            await this.processManager.waitForExit();
+            await processManager.start(processConfig);
+            await processManager.waitForExit();
         } catch (error) {
             logger.error(`Failed to start PDF export: ${error}`);
             events?.onError?.(`Failed to start PDF export: ${error}`);
             throw error;
+        } finally {
+            this.running.delete(processManager);
         }
     }
 
     /**
-     * Check if export process is currently running.
+     * Whether at least one export is currently in flight.
      */
     public isExporting(): boolean {
-        return this.processManager.isRunning();
+        return this.running.size > 0;
     }
 
     /**
-     * Cancel the current export operation.
+     * Terminate every export in flight and resolve once each process is gone.
+     *
+     * Quarkdown's PDF pipeline spawns Node and a headless browser of its own, which the
+     * JVM does not take down when it is signalled, so termination relies on
+     * {@link ProcessManager} reaching the whole tree.
      */
     public async cancel(): Promise<void> {
-        await this.processManager.stop();
+        await Promise.all([...this.running].map((processManager) => processManager.stop()));
     }
 }

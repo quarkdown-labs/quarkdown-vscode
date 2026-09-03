@@ -1,8 +1,16 @@
 import * as vscode from 'vscode';
 import { QuarkdownLanguageClient } from './client';
 import { QuarkdownPreviewManager } from './previewManager';
+import { QuarkdownPdfExporter } from './pdfExport';
 import { QuarkdownCommands } from './commands';
 import { VIEW_TYPES } from './constants';
+
+/**
+ * Deadline for the whole of {@link deactivate}, set below the host's own cap so that
+ * running out of time is something this extension observes rather than something done
+ * to it.
+ */
+const DEACTIVATE_TIMEOUT_MS = 4000;
 
 let client: QuarkdownLanguageClient;
 
@@ -92,13 +100,51 @@ function registerDocumentCloseHandler(context: vscode.ExtensionContext): void {
 /**
  * Extension deactivation hook.
  * Cleans up resources and stops services.
+ *
+ * VS Code allows every installed extension's deactivate() a combined five seconds before
+ * calling exit(), so these shutdowns run concurrently rather than in sequence: waiting up
+ * to five seconds for the preview to exit and then again for the language server does not
+ * fit in that budget. Whatever has not finished by {@link DEACTIVATE_TIMEOUT_MS} is left
+ * behind either way, but losing to this deadline leaves a log line to diagnose.
  */
 export async function deactivate(): Promise<void> {
-    const previewManager = QuarkdownPreviewManager.getInstance();
-    await previewManager.dispose();
+    await withDeadline(
+        Promise.allSettled([
+            QuarkdownPreviewManager.disposeInstance(),
+            QuarkdownPdfExporter.disposeInstance(),
+            stopLanguageClient(),
+        ]),
+        DEACTIVATE_TIMEOUT_MS
+    );
+}
 
-    if (client) {
-        client.dispose();
-        await client.stop();
+/**
+ * Stop and release the language client, if one was ever started.
+ */
+async function stopLanguageClient(): Promise<void> {
+    if (!client) {
+        return;
+    }
+
+    client.dispose();
+    await client.stop();
+}
+
+/**
+ * Resolve once `work` settles or `timeoutMs` elapses, whichever happens first, reporting
+ * the timeout. Nothing is cancelled on expiry; the work is merely no longer awaited.
+ */
+async function withDeadline(work: Promise<unknown>, timeoutMs: number): Promise<void> {
+    let timer: NodeJS.Timeout | undefined;
+
+    const expiry = new Promise<'expired'>((resolve) => {
+        timer = setTimeout(() => resolve('expired'), timeoutMs);
+    });
+
+    const outcome = await Promise.race([work.then(() => 'settled' as const), expiry]);
+    clearTimeout(timer);
+
+    if (outcome === 'expired') {
+        console.warn(`Quarkdown: deactivation did not finish within ${timeoutMs}ms`);
     }
 }

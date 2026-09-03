@@ -12,7 +12,7 @@ import { Strings } from './strings';
  * handling the lifecycle and communication between both components.
  */
 export class QuarkdownPreviewManager {
-    private static instance: QuarkdownPreviewManager;
+    private static instance: QuarkdownPreviewManager | undefined;
     private server: QuarkdownLivePreviewServer;
     private webview: PreviewWebview;
     private currentFilePath: string | undefined;
@@ -31,6 +31,15 @@ export class QuarkdownPreviewManager {
 
     public static getInstance(): QuarkdownPreviewManager {
         return this.instance || (this.instance = new QuarkdownPreviewManager());
+    }
+
+    /**
+     * Dispose the manager if one was ever created, leaving it absent afterwards.
+     * Avoids constructing a manager, and its output channel, purely to shut it down.
+     */
+    public static async disposeInstance(): Promise<void> {
+        await QuarkdownPreviewManager.instance?.dispose();
+        QuarkdownPreviewManager.instance = undefined;
     }
 
     /**
