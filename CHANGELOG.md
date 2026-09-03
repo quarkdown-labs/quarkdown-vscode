@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+-   Fixed Quarkdown processes being left running after the live preview was stopped, or after it was restarted before the previous one had shut down.
+-   Fixed a second PDF export cancelling the first instead of running alongside it, which reported the cancelled export as a failure.
+-   Fixed the live preview surviving on Linux and macOS when Quarkdown is launched through a wrapper script.
+-   Improved cleanup when VS Code is closed, so the preview, PDF exports and language server are shut down within the time the editor allows.
+
 ## [1.2.1] - 2026-05-03
 
 -   Fixed live preview loading infinitely on slower machines due to aggressive polling timeouts.
