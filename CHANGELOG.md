@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-09-04
+
 -   Fixed Quarkdown processes being left running after the live preview was stopped, or after it was restarted before the previous one had shut down.
 -   Fixed a second PDF export cancelling the first instead of running alongside it, which reported the cancelled export as a failure.
 -   Fixed the live preview surviving on Linux and macOS when Quarkdown is launched through a wrapper script.
@@ -54,7 +56,9 @@ This release anticipates changes for the release of Quarkdown v2.0.0.
 
 -   Fixed process spawning issues on Windows.
 
-[Unreleased]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.2.2...HEAD
+
+[1.2.2]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.2.1...v1.2.2
 
 [1.2.1]: https://github.com/quarkdown-labs/quarkdown-vscode/compare/v1.2.0...v1.2.1
 
