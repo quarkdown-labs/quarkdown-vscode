@@ -126,3 +126,137 @@ describe('ProcessManager', () => {
         await expect(manager.waitForExit(50)).rejects.toThrow(/did not exit within/);
     });
 });
+
+/** Poll until `check` stops throwing, or rethrow its failure once `timeoutMs` elapses. */
+async function waitUntil(check: () => void, timeoutMs = 5000): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+
+    for (;;) {
+        try {
+            check();
+            return;
+        } catch (error) {
+            if (Date.now() > deadline) {
+                throw error;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+    }
+}
+
+/** Whether a pid is still alive and signallable from this process. */
+function isAlive(pid: number): boolean {
+    try {
+        process.kill(pid, 0);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Windows terminates with `taskkill /f`, which is unconditional: there is no graceful
+ * phase to observe, and no process groups. Tests of those semantics are Unix-only, and the
+ * Windows termination path is covered end-to-end by the integration suite instead.
+ */
+const IS_WINDOWS = process.platform === 'win32';
+
+describe('ProcessManager termination', () => {
+    /**
+     * Start a Node child running `script`, held open by an interval, and resolve with its
+     * pid only once the child reports itself ready. Signalling a child that has not
+     * finished booting merely tests the default signal disposition, not the handler
+     * `script` installs.
+     */
+    async function startReadyChild(manager: ProcessManager, script: string): Promise<number> {
+        let stdout = '';
+
+        await manager.start({
+            command: 'node',
+            args: ['-e', `${script} setInterval(() => {}, 1000); console.log('ready');`],
+            events: { onStdout: (data) => (stdout += data) },
+        });
+
+        await waitUntil(() => expect(stdout).toContain('ready'));
+
+        return manager.getPid()!;
+    }
+
+    /** A child that delays its exit, the way a server draining open connections does. */
+    const SLOW_TO_EXIT = "process.on('SIGTERM', () => setTimeout(() => process.exit(0), 800));";
+    /** A child that ignores the graceful request outright. */
+    const IGNORES_SIGTERM = "process.on('SIGTERM', () => {});";
+
+    it('shares a single promise between concurrent stop() callers', async () => {
+        const manager = new ProcessManager();
+        const pid = await startReadyChild(manager, SLOW_TO_EXIT);
+
+        const first = manager.stop();
+        const second = manager.stop();
+
+        // The second caller must not be told "already handled" and let through early.
+        expect(second).toBe(first);
+
+        await second;
+        expect(isAlive(pid)).toBe(false);
+        expect(manager.isRunning()).toBe(false);
+    });
+
+    it.skipIf(IS_WINDOWS)('stop() resolves only once the child has really exited', async () => {
+        const manager = new ProcessManager();
+        const pid = await startReadyChild(manager, SLOW_TO_EXIT);
+
+        let stopped = false;
+        const stopping = manager.stop().then(() => {
+            stopped = true;
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        expect(stopped).toBe(false);
+        expect(isAlive(pid)).toBe(true);
+
+        await stopping;
+        expect(isAlive(pid)).toBe(false);
+    });
+
+    it.skipIf(IS_WINDOWS)('escalates to an unconditional kill when the child ignores SIGTERM', async () => {
+        const manager = new ProcessManager();
+        const pid = await startReadyChild(manager, IGNORES_SIGTERM);
+
+        await manager.stop();
+
+        expect(isAlive(pid)).toBe(false);
+        expect(manager.isRunning()).toBe(false);
+    });
+
+    it.skipIf(IS_WINDOWS)('terminates the whole process group, not just the direct child', async () => {
+        const manager = new ProcessManager();
+        let stdout = '';
+
+        // `sh` does not exec here, so `sleep` is a grandchild: unreachable by a signal
+        // aimed at the direct child alone.
+        await manager.start({
+            command: 'sh',
+            args: ['-c', 'sleep 60 & echo $!; wait'],
+            events: { onStdout: (data) => (stdout += data) },
+        });
+
+        await waitUntil(() => expect(stdout.trim()).toMatch(/^\d+$/));
+        const grandchild = Number(stdout.trim());
+        expect(isAlive(grandchild)).toBe(true);
+
+        await manager.stop();
+        await waitUntil(() => expect(isAlive(grandchild)).toBe(false));
+    });
+
+    it('stop() is a no-op after the child has exited on its own', async () => {
+        const manager = new ProcessManager();
+        await manager.start({ command: 'true', args: [] });
+
+        await manager.waitForExit(5000);
+        await manager.stop();
+
+        expect(manager.isRunning()).toBe(false);
+        expect(manager.getPid()).toBeUndefined();
+    });
+});

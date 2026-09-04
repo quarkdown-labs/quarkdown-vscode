@@ -171,6 +171,53 @@ describe.skipIf(!QUARKDOWN_PATH)('QuarkdownServer (integration)', () => {
         expect(changed, 'index.html should have changed after modifying the source').toBe(true);
     });
 
+    /**
+     * Whether a request to `url` is refused, meaning nothing is listening any more.
+     *
+     * Binding the port instead would not answer the question: SO_REUSEADDR lets a probe
+     * bind 127.0.0.1 while the server still holds the wildcard address, so a running
+     * server reads as gone.
+     */
+    function isRefused(url: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            const request = http.get(url, (res) => {
+                res.resume();
+                resolve(false);
+            });
+            request.on('error', () => resolve(true));
+            request.setTimeout(2000, () => {
+                request.destroy();
+                resolve(false);
+            });
+        });
+    }
+
+    it('stops serving by the time stop() resolves', async () => {
+        const readyUrl = await startAndWaitForReady(fixturePath, 18105);
+        expect(await isRefused(readyUrl), 'server should answer while it runs').toBe(false);
+
+        await server.stop();
+
+        // stop() resolving has to mean the process is gone, not merely that it was
+        // signalled. On Windows this exercises the taskkill path, whose exit code used to
+        // be read as proof of death even while the tree was still dying.
+        expect(await isRefused(readyUrl), 'server should be gone once stop() resolves').toBe(true);
+    });
+
+    it('starts again on the same port immediately after a stop', async () => {
+        const port = 18106;
+        await startAndWaitForReady(fixturePath, port);
+
+        await server.stop();
+
+        // Closing a preview and reopening it straight away is the ordinary case that used
+        // to leave an untracked server behind: the replacement could not bind the port the
+        // previous one still held, and never became ready.
+        const readyUrl = await startAndWaitForReady(fixturePath, port);
+        expect(readyUrl).toContain(String(port));
+        expect(server.isRunning()).toBe(true);
+    });
+
     it('fires error for invalid executable', async () => {
         // On Unix, a nonexistent command triggers an ENOENT error event.
         // On Windows, `cmd /c nonexistent` spawns successfully but exits

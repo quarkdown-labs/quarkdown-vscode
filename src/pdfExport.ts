@@ -12,7 +12,7 @@ import { OUTPUT_CHANNELS } from './constants';
  * handling the export lifecycle and user feedback.
  */
 export class QuarkdownPdfExporter {
-    private static instance: QuarkdownPdfExporter;
+    private static instance: QuarkdownPdfExporter | undefined;
     private exportService: PdfExportService;
     private readonly logger: VSCodeLogger;
 
@@ -23,6 +23,15 @@ export class QuarkdownPdfExporter {
 
     public static getInstance(): QuarkdownPdfExporter {
         return this.instance || (this.instance = new QuarkdownPdfExporter());
+    }
+
+    /**
+     * Dispose the exporter if one was ever created, leaving it absent afterwards.
+     * Avoids constructing an exporter, and its output channel, purely to shut it down.
+     */
+    public static async disposeInstance(): Promise<void> {
+        await QuarkdownPdfExporter.instance?.dispose();
+        QuarkdownPdfExporter.instance = undefined;
     }
 
     /**
@@ -40,7 +49,6 @@ export class QuarkdownPdfExporter {
             logger: this.logger,
         };
 
-        // Show initial progress message
         vscode.window.showInformationMessage(Strings.exportInProgress);
 
         const events: PdfExportEvents = {
@@ -76,5 +84,15 @@ export class QuarkdownPdfExporter {
             vscode.window.showErrorMessage(errorMessage);
             this.logger.error(errorMessage);
         }
+    }
+
+    /**
+     * Cancel any export still running and release the output channel.
+     * Should be called during extension deactivation: an abandoned export otherwise
+     * outlives the editor, along with the Node and browser processes beneath it.
+     */
+    public async dispose(): Promise<void> {
+        await this.exportService.cancel();
+        this.logger.dispose();
     }
 }

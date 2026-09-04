@@ -118,17 +118,82 @@ describe('PdfExportService', () => {
         expect(onError).toHaveBeenCalledWith(expect.stringContaining('install'));
     });
 
-    it('isExporting() delegates to ProcessManager.isRunning', () => {
-        vi.mocked(ProcessManager.prototype.isRunning).mockReturnValue(true);
-        expect(service.isExporting()).toBe(true);
+    it('isExporting() reports whether an export is in flight', async () => {
+        let duringExport: boolean | undefined;
+        vi.mocked(ProcessManager.prototype.start).mockImplementation(async () => {
+            duringExport = service.isExporting();
+        });
 
-        vi.mocked(ProcessManager.prototype.isRunning).mockReturnValue(false);
+        expect(service.isExporting()).toBe(false);
+        await service.exportToPdf(defaultConfig);
+
+        expect(duringExport).toBe(true);
         expect(service.isExporting()).toBe(false);
     });
 
-    it('cancel() calls ProcessManager.stop', async () => {
+    it('gives each export its own process, so one cannot terminate another', async () => {
+        vi.mocked(ProcessManager.prototype.start).mockImplementation(async (config) => {
+            config.events?.onExit?.(0, null);
+        });
+
+        await Promise.all([service.exportToPdf(defaultConfig), service.exportToPdf(defaultConfig)]);
+
+        // Sharing one process would mean starting the second export stops the first.
+        expect(vi.mocked(ProcessManager).mock.instances).toHaveLength(2);
+    });
+
+    it('reports each concurrent export its own output path', async () => {
+        const paths: (string | undefined)[] = [];
+        const onSuccess = (info?: [string, 'file' | 'folder']) => paths.push(info?.[0]);
+
+        // The first export produces its output, the second runs to completion, and only
+        // then does the first exit. Stdout held on the service rather than the export
+        // would by then have been overwritten with the second export's path.
+        let exitFirst: (() => void) | undefined;
+
+        vi.mocked(ProcessManager.prototype.start)
+            .mockImplementationOnce(async (config) => {
+                config.events?.onStdout?.('Success @ /out/first.pdf');
+                exitFirst = () => config.events?.onExit?.(0, null);
+            })
+            .mockImplementationOnce(async (config) => {
+                config.events?.onStdout?.('Success @ /out/second.pdf');
+                config.events?.onExit?.(0, null);
+            });
+
+        const first = service.exportToPdf(defaultConfig, { onSuccess });
+        const second = service.exportToPdf(defaultConfig, { onSuccess });
+
+        await second;
+        exitFirst!();
+        await first;
+
+        expect(paths).toEqual(['/out/second.pdf', '/out/first.pdf']);
+    });
+
+    it('cancel() stops each export in flight', async () => {
+        let finishExport: (() => void) | undefined;
+        vi.mocked(ProcessManager.prototype.waitForExit).mockImplementation(
+            () =>
+                new Promise<number | null>((resolve) => {
+                    finishExport = () => resolve(0);
+                })
+        );
+
+        const exporting = service.exportToPdf(defaultConfig);
+        await vi.waitFor(() => expect(service.isExporting()).toBe(true));
+
+        await service.cancel();
+        expect(ProcessManager.prototype.stop).toHaveBeenCalledOnce();
+
+        finishExport!();
+        await exporting;
+        expect(service.isExporting()).toBe(false);
+    });
+
+    it('cancel() does nothing when no export is running', async () => {
         await service.cancel();
 
-        expect(ProcessManager.prototype.stop).toHaveBeenCalledOnce();
+        expect(ProcessManager.prototype.stop).not.toHaveBeenCalled();
     });
 });

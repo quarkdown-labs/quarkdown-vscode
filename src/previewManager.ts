@@ -12,10 +12,16 @@ import { Strings } from './strings';
  * handling the lifecycle and communication between both components.
  */
 export class QuarkdownPreviewManager {
-    private static instance: QuarkdownPreviewManager;
+    private static instance: QuarkdownPreviewManager | undefined;
     private server: QuarkdownLivePreviewServer;
     private webview: PreviewWebview;
     private currentFilePath: string | undefined;
+    /**
+     * Identifies the current preview session. Every start or stop request opens a new one,
+     * which lets an in-flight startPreview() detect that it has been superseded while
+     * awaiting and bail out, instead of taking the webview over from a newer session.
+     */
+    private sessionId = 0;
 
     private constructor() {
         this.server = new QuarkdownLivePreviewServer();
@@ -28,10 +34,18 @@ export class QuarkdownPreviewManager {
     }
 
     /**
+     * Dispose the manager if one was ever created, leaving it absent afterwards.
+     * Avoids constructing a manager, and its output channel, purely to shut it down.
+     */
+    public static async disposeInstance(): Promise<void> {
+        await QuarkdownPreviewManager.instance?.dispose();
+        QuarkdownPreviewManager.instance = undefined;
+    }
+
+    /**
      * Set up event handlers to coordinate between server and webview.
      */
     private setupEventHandlers(): void {
-        // Server event handlers
         const serverEvents: ServerEvents = {
             onReady: (url: string) => {
                 void this.webview.loadPreview(url);
@@ -48,7 +62,6 @@ export class QuarkdownPreviewManager {
         };
         this.server.setEventHandlers(serverEvents);
 
-        // Webview event handlers
         const webviewEvents: WebviewEvents = {
             onDispose: () => {
                 if (this.server.isRunning()) {
@@ -65,11 +78,16 @@ export class QuarkdownPreviewManager {
      * @param filePath Path to the .qd file to preview
      */
     public async startPreview(filePath: string): Promise<void> {
-        await this.stopPreview();
+        const session = ++this.sessionId;
+
+        await this.stopSession();
+
+        if (this.sessionId !== session) {
+            return;
+        }
 
         this.currentFilePath = filePath;
 
-        // Configure webview with allowed origins for the preview server
         const port = DEFAULT_PREVIEW_PORT;
         this.webview.setAllowedOrigins([
             `http://localhost:${port}/live`,
@@ -80,11 +98,18 @@ export class QuarkdownPreviewManager {
             `http://0.0.0.0:${port}`,
         ]);
 
-        // Show webview with loading screen immediately for better UX
+        // Shown before the server exists, so the wait is a loading screen rather than
+        // nothing at all.
         await this.webview.show();
+
+        if (this.sessionId !== session) {
+            return;
+        }
+
         vscode.window.showInformationMessage(Strings.previewStartingInfo);
 
-        // Start the server (this will trigger webview update when ready)
+        // Returns once the process is spawned; the webview is filled in later, from the
+        // onReady handler.
         await this.server.start(filePath);
     }
 
@@ -92,6 +117,15 @@ export class QuarkdownPreviewManager {
      * Stop the preview process and cleanup resources.
      */
     public async stopPreview(): Promise<void> {
+        this.sessionId++;
+        await this.stopSession();
+    }
+
+    /**
+     * Stop the running server and tear down its UI, leaving the current session open.
+     * Used by {@link startPreview}, which owns the session it is setting up.
+     */
+    private async stopSession(): Promise<void> {
         await this.server.stop();
         this.cleanup();
     }

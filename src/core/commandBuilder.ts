@@ -27,11 +27,12 @@ export class QuarkdownCommandBuilder {
      */
     public static buildCommand(executablePath: string, additionalArgs: string[]): Omit<QuarkdownCommand, 'cwd'> {
         if (process.platform === 'win32') {
-            // On Windows, wrap with cmd.exe
-            const launcher = path.extname(executablePath) ? executablePath : `${executablePath}`;
+            // Node refuses to spawn a .bat/.cmd launcher without a shell, so Quarkdown on
+            // Windows is always reached through cmd.exe. The process that matters is
+            // therefore a grandchild, which is why terminating it has to walk the tree.
             return {
                 command: 'cmd',
-                args: ['/c', launcher, ...additionalArgs],
+                args: ['/c', executablePath, ...additionalArgs],
             };
         }
 

@@ -63,7 +63,6 @@ export class PreviewWebview {
 
         this.webviewPanel.webview.html = await this.getWebviewHtml();
 
-        // Set up disposal handler
         this.webviewPanel.onDidDispose(() => {
             this.webviewPanel = undefined;
             this.events?.onDispose();
@@ -84,7 +83,8 @@ export class PreviewWebview {
             this.webviewPanel.title = Strings.previewPanelTitle;
             this.webviewPanel.webview.html = await this.getWebviewHtml();
 
-            // Post message after DOM is ready to load the preview URL
+            // Assigning html above reloads the document, so the message is deferred by a
+            // turn to arrive once that document is ready to receive it.
             setTimeout(() => {
                 this.webviewPanel?.webview.postMessage({
                     command: 'setSrc',
@@ -145,7 +145,6 @@ export class PreviewWebview {
             return this.getFallbackHtml();
         }
 
-        // Inject dynamic values into the HTML template
         return htmlContent
             .replace(/__FRAME_ORIGINS__/g, this.allowedOrigins)
             .replace(/__LOADING_MESSAGE__/g, Strings.loadingMessage)
